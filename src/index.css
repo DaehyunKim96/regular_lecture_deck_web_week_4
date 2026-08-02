@@ -1,0 +1,16 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #e9e2d4;
+  overflow: hidden;
+}
+
+.deck-frame {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+}
