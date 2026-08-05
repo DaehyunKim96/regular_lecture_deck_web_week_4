@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DESIGN.md (안) — 디자인 프리뷰</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#F6F4EF;
+    --surface:#FFFFFF;
+    --text:#22262B;
+    --muted:#6B6F76;
+    --line:#D8D4C9;
+    --accent:#C1440E;
+
+    --font-title:'Pretendard', sans-serif;
+    --font-body:'Pretendard', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+
+    --fs-h1: clamp(28px, 3.333vw, 64px);
+    --fs-h2: clamp(20px, 2.292vw, 44px);
+    --fs-body: clamp(13px, 1.146vw, 22px);
+    --fs-caption: clamp(10px, 0.833vw, 16px);
+    --fs-metric: clamp(34px, 5vw, 96px);
+    --fs-metric-sm: clamp(22px, 2.8vw, 54px);
+
+    --sp-1: clamp(4px, 0.417vw, 8px);
+    --sp-2: clamp(8px, 0.833vw, 16px);
+    --sp-3: clamp(12px, 1.25vw, 24px);
+    --sp-4: clamp(20px, 2.083vw, 40px);
+    --sp-5: clamp(32px, 3.333vw, 64px);
+    --pad-outer: clamp(20px, 5vw, 96px);
+    --gutter: clamp(12px, 1.25vw, 24px);
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    padding: var(--sp-5) clamp(16px, 4vw, 64px);
+    background: var(--canvas);
+    color: var(--text);
+    font-family: var(--font-body);
+  }
+
+  .doc-header{
+    max-width:1920px;
+    margin:0 auto var(--sp-5);
+    border-bottom:1px solid var(--line);
+    padding-bottom: var(--sp-4);
+  }
+  .doc-header h1{
+    font-family: var(--font-title);
+    font-weight:700;
+    font-size: clamp(20px, 1.8vw, 32px);
+    margin:0 0 var(--sp-2);
+  }
+  .doc-header p{
+    font-size: var(--fs-body);
+    color: var(--muted);
+    margin:0 0 var(--sp-1);
+    max-width: 70ch;
+  }
+  .doc-header .tag{
+    font-family: var(--font-mono);
+    font-size: var(--fs-caption);
+    color: var(--accent);
+  }
+
+  .slide-shell{
+    max-width:1920px;
+    margin:0 auto var(--sp-5);
+  }
+  .slide-meta{
+    font-family: var(--font-mono);
+    font-size: var(--fs-caption);
+    color: var(--muted);
+    margin:0 0 var(--sp-2);
+  }
+  .slide{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    background:var(--canvas);
+    border:1px solid var(--line);
+    padding:var(--pad-outer);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  .grid{
+    flex:1;
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--gutter);
+    min-height:0;
+  }
+  .col-8{ grid-column: span 8; }
+  .col-4{ grid-column: span 4; }
+  .col-7{ grid-column: span 7; }
+  .col-5{ grid-column: span 5; }
+  .col-12{ grid-column: span 12; }
+
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: var(--fs-caption);
+    color: var(--muted);
+    margin:0 0 var(--sp-1);
+  }
+  h2.slide-title{
+    font-family: var(--font-title);
+    font-weight:700;
+    font-size: var(--fs-h2);
+    line-height:1.25;
+    margin:0 0 var(--sp-3);
+    max-width: 22ch;
+  }
+  .chip{
+    display:inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-caption);
+    color: var(--muted);
+    border-top:1px solid var(--line);
+    padding-top: var(--sp-1);
+    margin-bottom: var(--sp-4);
+  }
+  .lede{
+    font-size: var(--fs-body);
+    color: var(--text);
+    margin:0 0 var(--sp-3);
+    max-width: 60ch;
+  }
+  .key-line{
+    margin-top:auto;
+    padding-top: var(--sp-3);
+    border-top:1px solid var(--line);
+    font-family: var(--font-title);
+    font-weight:600;
+    font-size: var(--fs-body);
+  }
+
+  /* ---- Slide 0: tokens ---- */
+  .swatches{ display:flex; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-4); }
+  .swatch{ width:104px; }
+  .swatch .chip-color{ width:100%; height:64px; border:1px solid var(--line); }
+  .swatch .label{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); margin-top:var(--sp-1); line-height:1.4; }
+
+  .type-sample{ margin-bottom: var(--sp-2); }
+  .type-sample .tag{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); }
+  .type-sample .h1demo{ font-family:var(--font-title); font-weight:700; font-size:var(--fs-h1); line-height:1.15; }
+  .type-sample .h2demo{ font-family:var(--font-title); font-weight:700; font-size:var(--fs-h2); }
+  .type-sample .bodydemo{ font-family:var(--font-body); font-size:var(--fs-body); }
+  .type-sample .capdemo{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); }
+  .type-sample .metricdemo{ font-family:var(--font-title); font-weight:700; font-size:var(--fs-metric); color:var(--accent); }
+
+  .spacing-row{ display:flex; align-items:center; gap:var(--sp-2); margin-bottom:var(--sp-2); }
+  .spacing-bar{ height:12px; background:var(--text); }
+  .spacing-row .label{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); }
+
+  .mini-card{ border:1px solid var(--line); padding:var(--sp-2); margin-bottom:var(--sp-3); }
+  .mini-card .mc-label{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); }
+  .mini-card .mc-value{ font-family:var(--font-title); font-weight:700; font-size: calc(var(--fs-body) * 1.1); }
+
+  /* ---- S02: timeline ---- */
+  .timeline{ position:relative; margin-top:var(--sp-4); padding-top:var(--sp-4); }
+  .timeline::before{ content:""; position:absolute; top:0; left:0; right:0; height:1px; background:var(--line); }
+  .timeline-points{ display:flex; justify-content:space-between; gap:var(--sp-3); }
+  .tl-point{ flex:1; position:relative; }
+  .tl-point::before{ content:""; position:absolute; top:calc(-1 * var(--sp-4) - 3px); left:0; width:7px; height:7px; border-radius:50%; background:var(--text); }
+  .tl-point .tl-time{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); }
+  .tl-point .tl-desc{ font-size: calc(var(--fs-body) * 0.9); margin-top:var(--sp-1); max-width:26ch; }
+
+  .metric-block{ margin-bottom: var(--sp-4); }
+  .metric-block .metric-num{ font-family:var(--font-title); font-weight:700; line-height:1; }
+  .metric-block .metric-num.accent{ color:var(--accent); font-size:var(--fs-metric); }
+  .metric-block .metric-num.plain{ color:var(--text); font-size:var(--fs-metric-sm); }
+  .metric-block .metric-label{ font-size: calc(var(--fs-body) * 0.85); color:var(--muted); margin-top:var(--sp-1); max-width:22ch; }
+
+  /* ---- S04: flow steps ---- */
+  .flow{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:var(--sp-2); }
+  .flow-step{ display:flex; align-items:baseline; gap:var(--sp-3); border-left:1px solid var(--line); padding-left:var(--sp-3); }
+  .flow-step .num{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); width:2ch; flex-shrink:0; }
+  .flow-step .txt{ font-size: var(--fs-body); }
+  .flow-step:nth-child(1){ margin-left:0; }
+  .flow-step:nth-child(2){ margin-left:6%; }
+  .flow-step:nth-child(3){ margin-left:12%; }
+  .flow-step:nth-child(4){ margin-left:18%; border-left-color:var(--accent); }
+  .flow-step:nth-child(4) .num{ color:var(--accent); }
+  .flow-step:nth-child(4) .txt{ font-weight:600; }
+
+  /* ---- S05: decision card ---- */
+  .decision-card{ background:var(--surface); border:1px solid var(--line); padding:var(--sp-4); flex:1; display:flex; flex-direction:column; justify-content:center; }
+  .dc-field{ margin-bottom:var(--sp-3); }
+  .dc-field .dc-label{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); margin-bottom:var(--sp-1); }
+  .dc-field.primary .dc-value{ font-family:var(--font-title); font-weight:700; font-size: var(--fs-metric-sm); line-height:1.2; }
+  .dc-field.primary.accent .dc-value{ color:var(--accent); }
+  .dc-field.secondary .dc-value{ font-size: var(--fs-body); }
+  .dc-field.muted .dc-value{ font-size: calc(var(--fs-body) * 0.85); color:var(--muted); }
+
+  /* ---- S07: 4-week strip + table ---- */
+  .weeks{ display:grid; grid-template-columns: repeat(4, 1fr); gap:var(--gutter); margin-bottom:var(--sp-4); }
+  .week{ border-top:2px solid var(--line); padding-top:var(--sp-2); }
+  .week .wk-label{ font-family:var(--font-mono); font-size:var(--fs-caption); color:var(--muted); }
+  .week .wk-desc{ font-size: calc(var(--fs-body) * 0.85); margin-top:var(--sp-1); }
+  .week.current{ border-top-color:var(--accent); }
+  .week.current .wk-label{ color:var(--accent); }
+
+  table.compare{ width:100%; border-collapse:collapse; font-size: calc(var(--fs-body) * 0.85); }
+  table.compare th, table.compare td{ text-align:left; padding: var(--sp-1) var(--sp-2); border-bottom:1px solid var(--line); }
+  table.compare th{ font-family:var(--font-mono); color:var(--muted); font-weight:500; font-size:var(--fs-caption); }
+  table.compare td.num{ font-family:var(--font-mono); }
+
+  footer.doc-footer{ max-width:1920px; margin:var(--sp-5) auto 0; color:var(--muted); font-size:var(--fs-caption); font-family:var(--font-mono); border-top:1px solid var(--line); padding-top:var(--sp-3); }
+
+  @media (prefers-reduced-motion: no-preference){
+    .slide{ animation: fade-up 260ms ease-out both; }
+  }
+  @keyframes fade-up{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+  <header class="doc-header">
+    <h1>DESIGN.md (안) — 확정 전 디자인 프리뷰</h1>
+    <p>이 파일은 DESIGN.md를 확정하기 전에 색상·서체·여백·공통 컴포넌트와 대표 슬라이드 레이아웃을 눈으로 확인하기 위한 시안이다. 실제 배포용 슬라이드가 아니다.</p>
+    <p>모든 텍스트는 <code>presentation_sample/content/outline.md</code>에서만 가져왔다.</p>
+    <span class="tag">SOURCE: outline.md · CLAUDE.md 디자인 계획(2026-07-29 합의)</span>
+  </header>
+
+  <!-- Slide 0: 디자인 토큰 -->
+  <div class="slide-shell">
+    <p class="slide-meta">TOKENS · 색상 / 타이포그래피 / 여백 / 컴포넌트 (S 번호에 해당하지 않는 참조용 슬라이드)</p>
+    <div class="slide">
+      <p class="eyebrow">DESIGN TOKENS</p>
+      <h2 class="slide-title">디자인 토큰 프리뷰</h2>
+      <div class="grid">
+        <div class="col-8">
+          <div class="swatches">
+            <div class="swatch"><div class="chip-color" style="background:var(--canvas)"></div><div class="label">Canvas<br>#F6F4EF</div></div>
+            <div class="swatch"><div class="chip-color" style="background:var(--surface)"></div><div class="label">Surface<br>#FFFFFF</div></div>
+            <div class="swatch"><div class="chip-color" style="background:var(--text)"></div><div class="label" style="color:#F6F4EF">Text<br>#22262B</div></div>
+            <div class="swatch"><div class="chip-color" style="background:var(--muted)"></div><div class="label" style="color:#F6F4EF">Muted<br>#6B6F76</div></div>
+            <div class="swatch"><div class="chip-color" style="background:var(--line)"></div><div class="label">Line<br>#D8D4C9</div></div>
+            <div class="swatch"><div class="chip-color" style="background:var(--accent)"></div><div class="label" style="color:#F6F4EF">Accent(1회)<br>#C1440E</div></div>
+          </div>
+
+          <div class="type-sample"><span class="tag">H1 · 64px · Pretendard Bold</span><div class="h1demo">회의는 끝났는데, 일은 왜 다시 시작될까</div></div>
+          <div class="type-sample"><span class="tag">H2 · 44px · Pretendard Bold</span><div class="h2demo">말의 기록을, 실행의 시작점으로 바꾼다</div></div>
+          <div class="type-sample"><span class="tag">Body · 22px · Pretendard Regular</span><div class="bodydemo">AI가 결정하지 않는다. 사람이 확인하기 쉬운 초안을 만든다.</div></div>
+          <div class="type-sample"><span class="tag">Caption · 16px · IBM Plex Mono</span><div class="capdemo">교육용 가상 데이터 · 파일럿 사전 진단</div></div>
+          <div class="type-sample"><span class="tag">Metric · 96px · Pretendard Bold · Accent</span><div class="metricdemo">14건</div></div>
+        </div>
+        <div class="col-4">
+          <p class="eyebrow" style="margin-top:0">SPACING SCALE</p>
+          <div class="spacing-row"><div class="spacing-bar" style="width:8px"></div><span class="label">8px</span></div>
+          <div class="spacing-row"><div class="spacing-bar" style="width:16px"></div><span class="label">16px</span></div>
+          <div class="spacing-row"><div class="spacing-bar" style="width:24px"></div><span class="label">24px</span></div>
+          <div class="spacing-row"><div class="spacing-bar" style="width:40px"></div><span class="label">40px</span></div>
+          <div class="spacing-row"><div class="spacing-bar" style="width:64px"></div><span class="label">64px</span></div>
+
+          <p class="eyebrow" style="margin-top:var(--sp-4)">COMPONENTS</p>
+          <div class="mini-card">
+            <div class="mc-label">결정</div>
+            <div class="mc-value">Decision Card 필드 예시</div>
+          </div>
+          <div class="chip">Data Label Chip · 상단 실선 + 모노스페이스</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 1: S02 시간 흐름 -->
+  <div class="slide-shell">
+    <p class="slide-meta">S02 · 월요일 오전의 익숙한 장면 — 시간 흐름 레이아웃</p>
+    <div class="slide">
+      <p class="eyebrow">S02 · 월요일 오전의 익숙한 장면</p>
+      <h2 class="slide-title">“그래서, 지난주에 누가 하기로 했죠?”</h2>
+      <span class="chip">교육용 가상 데이터 · 파일럿 사전 진단</span>
+      <div class="grid">
+        <div class="col-8">
+          <p class="lede">2주 동안 팀 정기 운영회의 6회를 관찰했다.</p>
+          <div class="timeline">
+            <div class="timeline-points">
+              <div class="tl-point"><div class="tl-time">회의 종료</div><div class="tl-desc">중요한 결정 하나는 채팅방 위로 밀려 올라간다.</div></div>
+              <div class="tl-point"><div class="tl-time">+50분</div><div class="tl-desc">대표 회의 1회, 참여자 3명이 서로 다른 할 일 목록을 채팅에 게시</div></div>
+              <div class="tl-point"><div class="tl-time">+1시간</div><div class="tl-desc">같은 회의의 할 일을 다시 확인하는 채팅 질문 14건</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="metric-block"><div class="metric-num accent">14건</div><div class="metric-label">회의 후 1시간 내 재확인 질문 (2주간)</div></div>
+          <div class="metric-block"><div class="metric-num plain">3명</div><div class="metric-label">대표 회의, 서로 다른 할 일 목록 게시</div></div>
+        </div>
+      </div>
+      <p class="key-line">회의록이 없는 문제가 아니라, 다음 행동으로 연결되는 기록이 없는 문제다.</p>
+    </div>
+  </div>
+
+  <!-- Slide 2: S04 운영 흐름 -->
+  <div class="slide-shell">
+    <p class="slide-meta">S04 · 제안: 회의 후 10분 안에 '결정 카드'를 만든다 — 운영 흐름 레이아웃</p>
+    <div class="slide">
+      <p class="eyebrow">S04 · 제안: 회의 후 10분 안에 ‘결정 카드’를 만든다</p>
+      <h2 class="slide-title">말의 기록을, 실행의 시작점으로 바꾼다</h2>
+      <p class="lede">운영 목표: 회의 종료 후 10분 이내에 AI 초안을 만들고, 진행자가 3분 이내에 결정·담당자·기한만 확인한다.</p>
+      <div class="flow">
+        <div class="flow-step"><span class="num">1</span><span class="txt">회의 녹음 또는 메모를 하나의 지정 폴더에 둔다.</span></div>
+        <div class="flow-step"><span class="num">2</span><span class="txt">AI 에이전트가 결정·근거·할 일·담당자·기한 후보를 추출한다.</span></div>
+        <div class="flow-step"><span class="num">3</span><span class="txt">회의 진행자가 3분 안에 사실만 확인한다.</span></div>
+        <div class="flow-step"><span class="num">4</span><span class="txt">확정된 결정 카드를 팀 문서와 업무 보드에 공유한다.</span></div>
+      </div>
+      <p class="key-line">AI가 결정하지 않는다. 사람이 확인하기 쉬운 초안을 만든다.</p>
+    </div>
+  </div>
+
+  <!-- Slide 3: S05 결정 카드 -->
+  <div class="slide-shell">
+    <p class="slide-meta">S05 · 결과물은 한 장이면 충분하다 — 결정 카드 컴포넌트</p>
+    <div class="slide">
+      <p class="eyebrow">S05 · 결과물은 한 장이면 충분하다</p>
+      <h2 class="slide-title">긴 회의록 대신, 다음 행동을 보이게 한다</h2>
+      <span class="chip">교육용 예시 · 회의 후 결정 카드</span>
+      <div class="grid">
+        <div class="col-7">
+          <div class="decision-card">
+            <div class="dc-field primary accent">
+              <div class="dc-label">결정</div>
+              <div class="dc-value">9월 신규 온보딩은 단계형 안내로 바꾼다.</div>
+            </div>
+            <div class="dc-field primary">
+              <div class="dc-label">다음 행동</div>
+              <div class="dc-value">안내 문구 초안 작성</div>
+            </div>
+            <div class="dc-field secondary">
+              <div class="dc-label">담당·기한</div>
+              <div class="dc-value">지수 · 목요일 17:00</div>
+            </div>
+            <div class="dc-field muted">
+              <div class="dc-label">이유</div>
+              <div class="dc-value">첫날 이탈이 가장 높은 구간이 권한 설정 단계로 확인됐다.</div>
+            </div>
+            <div class="dc-field muted">
+              <div class="dc-label">확인할 점</div>
+              <div class="dc-value">권한 정책 변경 여부는 보안팀 검토 필요</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-5">
+          <p class="lede">시각 우선순위: ‘결정’과 ‘다음 행동’을 가장 크게, 근거와 확인점은 보조로 둔다.</p>
+        </div>
+      </div>
+      <p class="key-line">카드 한 장만 봐도 회의에 없던 사람이 무엇이 정해졌고 무엇을 해야 하는지 알 수 있어야 한다.</p>
+    </div>
+  </div>
+
+  <!-- Slide 4: S07 4주 계획 -->
+  <div class="slide-shell">
+    <p class="slide-meta">S07 · 4주만 작게 실험한다 — 4주 스트립 + 비교 표</p>
+    <div class="slide">
+      <p class="eyebrow">S07 · 4주만 작게 실험한다</p>
+      <h2 class="slide-title">회의를 바꾸지 않고, 회의 뒤만 바꾼다</h2>
+      <div class="weeks">
+        <div class="week"><div class="wk-label">1주차</div><div class="wk-desc">팀 정기회의 1개를 선택하고 카드 형식을 합의한다.</div></div>
+        <div class="week"><div class="wk-label">2주차</div><div class="wk-desc">AI 초안과 사람이 쓴 기존 회의록을 나란히 비교한다.</div></div>
+        <div class="week"><div class="wk-label">3주차</div><div class="wk-desc">담당자·기한 누락 사례를 점검하고 프롬프트를 고친다.</div></div>
+        <div class="week current"><div class="wk-label">4주차</div><div class="wk-desc">재확인 질문과 후속 업무 지연이 줄었는지 회고한다.</div></div>
+      </div>
+      <table class="compare">
+        <thead><tr><th>측정 항목</th><th>사전 진단</th><th>4주 파일럿 목표</th></tr></thead>
+        <tbody>
+          <tr><td>담당자/기한이 비어 있는 할 일 비율</td><td class="num">35%</td><td class="num">15% 이하</td></tr>
+          <tr><td>회의 후 1시간 내 재확인 질문 (2주간)</td><td class="num">14건</td><td class="num">7건 이하</td></tr>
+          <tr><td>후속 업무 명확성 (익명 설문, 5점 만점)</td><td class="num">2.8점</td><td class="num">4.0점 이상</td></tr>
+          <tr><td>AI 초안의 사실 오류</td><td class="num">측정 전</td><td class="num">회의당 1건 이하</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="doc-footer">design-preview.html · DESIGN.md 확정 전 시안 · outline.md 기준 교육용 가상 데이터</footer>
+
+</body>
+</html>

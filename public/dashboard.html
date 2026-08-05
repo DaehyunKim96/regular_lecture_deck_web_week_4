@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>커머스 인사이트 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
+    --line:#e8ebf0; --brand:#4f46e5; --brand2:#06b6d4; --pos:#16a34a;
+    --neg:#dc2626; --warn:#d97706; --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Pretendard',sans-serif;
+    background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45}
+  .layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  /* sidebar */
+  aside{background:#0f172a;color:#cbd5e1;padding:24px 18px;position:sticky;top:0;height:100vh}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;color:#fff;font-size:15px;margin-bottom:28px}
+  .logo .dot{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#94a3b8;
+    text-decoration:none;font-size:13.5px;margin-bottom:2px}
+  nav a.active,nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav-sec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#475569;margin:18px 0 8px 12px}
+  aside .foot{position:absolute;bottom:22px;font-size:11.5px;color:#64748b}
+  /* main */
+  main{padding:28px 34px 60px}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+  .top h1{font-size:22px;letter-spacing:-.02em}
+  .top .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 14px;
+    font-size:12.5px;color:var(--muted);box-shadow:var(--shadow)}
+  /* kpi cards */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .kpi .value{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:8px}
+  .kpi .unit{font-size:13px;color:var(--muted);font-weight:500}
+  .kpi .chip{font-size:11.5px;margin-top:8px;display:inline-block;padding:2px 8px;border-radius:6px}
+  .chip.warn{background:#fef3c7;color:#92400e} .chip.pos{background:#dcfce7;color:#166534}
+  .chip.neutral{background:#eef2ff;color:#3730a3}
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+  .panel h3{font-size:14px;margin-bottom:2px} .panel .desc{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .col-4{grid-column:span 4} .col-5{grid-column:span 5} .col-6{grid-column:span 6}
+  .col-7{grid-column:span 7} .col-8{grid-column:span 8} .col-12{grid-column:span 12}
+  .chart-wrap{position:relative;height:240px}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:11.5px;text-transform:uppercase;
+    letter-spacing:.04em;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px;border-bottom:1px solid #f1f3f6}
+  tr:last-child td{border-bottom:none}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .bar{height:6px;border-radius:4px;background:#eef2ff;overflow:hidden;width:90px;display:inline-block;vertical-align:middle}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .tag{font-size:11px;padding:2px 7px;border-radius:5px;background:#f1f5f9;color:#475569}
+  /* funnel */
+  .funnel-step{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .funnel-step .fbar{flex:1;height:34px;border-radius:8px;background:linear-gradient(90deg,var(--brand),var(--brand2));
+    color:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;font-weight:600}
+  .funnel-step .flabel{width:120px;font-size:13px;color:var(--muted)}
+  .funnel-step .fdrop{width:64px;text-align:right;font-size:12px;color:var(--neg);font-weight:600}
+  .insight{background:#f8fafc;border:1px solid var(--line);border-left:3px solid var(--brand);
+    border-radius:8px;padding:12px 14px;font-size:13px;color:#334155;margin-top:6px}
+  .insight b{color:var(--ink)}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)} .layout{grid-template-columns:1fr} aside{display:none}
+    .col-4,.col-5,.col-6,.col-7,.col-8{grid-column:span 12}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="logo"><span class="dot"></span> Commerce Insight</div>
+    <div class="nav-sec">Analytics</div>
+    <nav>
+      <a class="active" href="#">📊 개요</a>
+      <a href="#suppliers">🏢 공급사</a>
+      <a href="#funnel">🔻 전환 퍼널</a>
+      <a href="#coupon">🎟️ 쿠폰 실험</a>
+      <a href="#region">🗺️ 지역·채널</a>
+    </nav>
+    <div class="nav-sec">Operations</div>
+    <nav>
+      <a href="#">⏱️ 일배치 (n8n)</a>
+      <a href="#">🔔 알림</a>
+    </nav>
+    <div class="foot">최근 갱신<br>2026-06-16 23:40:27</div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <div>
+        <h1>커머스 인사이트 대시보드</h1>
+        <div class="sub">분석 기간 2026-03-16 ~ 2026-06-16 · 최근 3개월 기준</div>
+      </div>
+      <div class="pill">🟢 데이터 최신 · 2026-06-16 23:40:27</div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="label">💰 순매출(GMV)</div>
+        <div class="value">₩1,151,087,100</div>
+        <span class="chip neutral">주문 11,483건</span></div>
+      <div class="kpi"><div class="label">🧾 수수료 수익</div>
+        <div class="value">₩145,839,403</div>
+        <span class="chip pos">실효율 12.7%</span></div>
+      <div class="kpi"><div class="label">👤 구매 고객수</div>
+        <div class="value">5,146<span class="unit"> 명</span></div>
+        <span class="chip neutral">객단가 ₩100,243</span></div>
+      <div class="kpi"><div class="label">🛒 장바구니→구매</div>
+        <div class="value">26.9<span class="unit">%</span></div>
+        <span class="chip warn">조회→장바구니 12.4%</span></div>
+      <div class="kpi"><div class="label">⚠️ 상위3사 매출비중</div>
+        <div class="value">75.8<span class="unit">%</span></div>
+        <span class="chip warn">공급사 집중 리스크</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel col-8" id="trend">
+        <h3>월별 매출 추이</h3><div class="desc">net_amount 기준 · 전체 기간</div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="panel col-4" id="category">
+        <h3>카테고리별 매출</h3><div class="desc">수수료 실효율 동반 표기</div>
+        <div class="chart-wrap"><canvas id="catChart"></canvas></div>
+      </div>
+
+      <div class="panel col-7" id="suppliers">
+        <h3>공급사 Top 10</h3><div class="desc">매출 비중 · 평균 수수료율 · 수수료 수익</div>
+        <table id="supTable"><thead><tr>
+          <th>공급사</th><th>카테고리</th><th class="num">매출</th>
+          <th>비중</th><th class="num">수수료율</th><th class="num">수수료</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+      <div class="panel col-5" id="funnel">
+        <h3>구매 전환 퍼널</h3><div class="desc">상품조회 → 장바구니 → 결제시작 → 구매완료</div>
+        <div id="funnelBox"></div>
+        <div class="insight" id="funnelInsight"></div>
+      </div>
+
+      <div class="panel col-7" id="coupon">
+        <h3>쿠폰 A/B 실험 결과</h3><div class="desc">그룹별 전환율 · 7일 재구매율 · 객단가</div>
+        <div class="chart-wrap"><canvas id="couponChart"></canvas></div>
+        <div class="insight" id="couponInsight"></div>
+      </div>
+      <div class="panel col-5" id="region">
+        <h3>지역별 매출 비중</h3><div class="desc">수도권 집중도 확인</div>
+        <div class="chart-wrap"><canvas id="regionChart"></canvas></div>
+      </div>
+
+      <div class="panel col-12">
+        <h3>디바이스별 구매 전환</h3><div class="desc">product_view → purchase 전환율</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="deviceChart"></canvas></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const D = {"generated_at": "2026-06-16 23:40:27", "period": {"from": "2026-03-16", "to": "2026-06-16"}, "headline": {"net_amount": 1151087100, "orders": 11483, "commission_amount": 145839403, "buyers": 5146, "aov": 100243, "top3_supplier_share_pct": 75.8}, "funnel": {"product_view": 20453, "add_to_cart": 2534, "begin_checkout": 1443, "purchase": 681, "view_to_cart_pct": 12.4, "cart_to_purchase_pct": 26.9}, "suppliers": [{"name": "메가패션", "category": "패션", "order_cnt": 4514, "net_amount": 439324900, "share_pct": 38.2, "avg_commission_rate": 0.15, "commission_amount": 65898735}, {"name": "하이마트프로", "category": "가전", "order_cnt": 1331, "net_amount": 300403500, "share_pct": 26.1, "avg_commission_rate": 0.08, "commission_amount": 24032280}, {"name": "글로우뷰티", "category": "뷰티", "order_cnt": 2506, "net_amount": 133069400, "share_pct": 11.6, "avg_commission_rate": 0.2, "commission_amount": 26613880}, {"name": "테크밸리", "category": "디지털", "order_cnt": 349, "net_amount": 67688700, "share_pct": 5.9, "avg_commission_rate": 0.07, "commission_amount": 4738209}, {"name": "코지리빙", "category": "리빙", "order_cnt": 544, "net_amount": 49782500, "share_pct": 4.3, "avg_commission_rate": 0.1, "commission_amount": 4978250}, {"name": "스타일로드", "category": "패션", "order_cnt": 278, "net_amount": 28663600, "share_pct": 2.5, "avg_commission_rate": 0.15, "commission_amount": 4299540}, {"name": "스마트가전", "category": "가전", "order_cnt": 151, "net_amount": 28542000, "share_pct": 2.5, "avg_commission_rate": 0.08, "commission_amount": 2283360}, {"name": "디지털존", "category": "디지털", "order_cnt": 139, "net_amount": 25765600, "share_pct": 2.2, "avg_commission_rate": 0.07, "commission_amount": 1803592}, {"name": "트렌디웨어", "category": "패션", "order_cnt": 150, "net_amount": 16377300, "share_pct": 1.4, "avg_commission_rate": 0.15, "commission_amount": 2456595}, {"name": "홈데코플러스", "category": "리빙", "order_cnt": 172, "net_amount": 15695100, "share_pct": 1.4, "avg_commission_rate": 0.1, "commission_amount": 1569510}], "coupon": [{"group": "control", "users": 3344, "converted": 567, "conversion_pct": 17.0, "repurchase_7d_pct": 3.5, "net_amount": 63128952, "aov": 70300.0}, {"group": "treatment_amount", "users": 3342, "converted": 856, "conversion_pct": 25.6, "repurchase_7d_pct": 7.9, "net_amount": 91885590, "aov": 67712.0}, {"group": "treatment_rate", "users": 3314, "converted": 902, "conversion_pct": 27.2, "repurchase_7d_pct": 9.6, "net_amount": 94346216, "aov": 64094.0}], "funnel_by_device": [{"device": "desktop", "product_view": 4908, "add_to_cart": 781, "begin_checkout": 484, "purchase": 266, "pv_to_purchase_pct": 5.4}, {"device": "tablet", "product_view": 1592, "add_to_cart": 205, "begin_checkout": 117, "purchase": 60, "pv_to_purchase_pct": 3.8}, {"device": "mobile", "product_view": 13953, "add_to_cart": 1548, "begin_checkout": 842, "purchase": 355, "pv_to_purchase_pct": 2.5}], "monthly": [{"month": "2026-02", "net_amount": 168972300, "orders": 1658}, {"month": "2026-03", "net_amount": 394415100, "orders": 3851}, {"month": "2026-04", "net_amount": 360632300, "orders": 3661}, {"month": "2026-05", "net_amount": 399915500, "orders": 3967}, {"month": "2026-06", "net_amount": 185858300, "orders": 1863}], "region": [{"region": "수도권", "net_amount": 628054400, "share_pct": 54.6}, {"region": "영남", "net_amount": 185792400, "share_pct": 16.1}, {"region": "충청", "net_amount": 121747800, "share_pct": 10.6}, {"region": "호남", "net_amount": 115703900, "share_pct": 10.1}, {"region": "강원", "net_amount": 53989000, "share_pct": 4.7}, {"region": "제주", "net_amount": 45799600, "share_pct": 4.0}], "channel": [{"channel": "app", "net_amount": 554978100, "orders": 5488}, {"channel": "mobile_web", "net_amount": 395852800, "orders": 4000}, {"channel": "web", "net_amount": 200256200, "orders": 1995}], "category": [{"category": "패션", "net_amount": 484365800, "commission_amount": 72654870, "effective_pct": 15.0}, {"category": "가전", "net_amount": 328945500, "commission_amount": 26315640, "effective_pct": 8.0}, {"category": "뷰티", "net_amount": 153975800, "commission_amount": 30795160, "effective_pct": 20.0}, {"category": "디지털", "net_amount": 93454300, "commission_amount": 6541801, "effective_pct": 7.0}, {"category": "리빙", "net_amount": 65477600, "commission_amount": 6547760, "effective_pct": 10.0}, {"category": "식품", "net_amount": 24868100, "commission_amount": 2984172, "effective_pct": 12.0}]};
+const fmt = n => new Intl.NumberFormat('ko-KR').format(Math.round(n));
+const won = n => '₩' + fmt(n);
+const ink='#0f172a', muted='#64748b', brand='#4f46e5', brand2='#06b6d4';
+Chart.defaults.font.family = "'Inter','Apple SD Gothic Neo',sans-serif";
+Chart.defaults.color = muted;
+
+// 월별 추이
+new Chart(trendChart, {type:'line', data:{
+  labels: D.monthly.map(m=>m.month),
+  datasets:[{label:'순매출', data:D.monthly.map(m=>m.net_amount),
+    borderColor:brand, backgroundColor:'rgba(79,70,229,.08)', fill:true,
+    tension:.35, pointRadius:3, pointBackgroundColor:brand, borderWidth:2}]},
+  options:{maintainAspectRatio:false, plugins:{legend:{display:false},
+    tooltip:{callbacks:{label:c=>won(c.raw)}}},
+    scales:{y:{ticks:{callback:v=>(v/1e6)+'M'}, grid:{color:'#f1f3f6'}}, x:{grid:{display:false}}}}});
+
+// 카테고리 도넛
+new Chart(catChart, {type:'doughnut', data:{
+  labels: D.category.map(c=>c.category),
+  datasets:[{data:D.category.map(c=>c.net_amount),
+    backgroundColor:['#4f46e5','#06b6d4','#8b5cf6','#f59e0b','#10b981','#ef4444']}]},
+  options:{maintainAspectRatio:false, cutout:'62%',
+    plugins:{legend:{position:'right', labels:{boxWidth:10,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>c.label+' '+won(c.raw)}}}}});
+
+// 공급사 테이블
+const maxNet = Math.max(...D.suppliers.map(s=>s.net_amount));
+supTable.querySelector('tbody').innerHTML = D.suppliers.map(s=>`
+  <tr><td><b>${s.name}</b></td><td><span class="tag">${s.category}</span></td>
+  <td class="num">${won(s.net_amount)}</td>
+  <td><span class="bar"><i style="width:${(s.net_amount/maxNet*100).toFixed(0)}%"></i></span> ${s.share_pct}%</td>
+  <td class="num">${(s.avg_commission_rate*100).toFixed(0)}%</td>
+  <td class="num">${won(s.commission_amount)}</td></tr>`).join('');
+
+// 퍼널
+const f = D.funnel;
+const steps = [
+  ['상품 상세조회', f.product_view], ['장바구니 추가', f.add_to_cart],
+  ['결제 시작', f.begin_checkout], ['구매 완료', f.purchase]];
+funnelBox.innerHTML = steps.map((s,i)=>{
+  const w = (s[1]/f.product_view*100);
+  const drop = i>0 ? (100 - s[1]/steps[i-1][1]*100).toFixed(0)+'%↓' : '';
+  return `<div class="funnel-step"><span class="flabel">${s[0]}</span>
+    <span class="fbar" style="width:${Math.max(w,18)}%">${fmt(s[1])}</span>
+    <span class="fdrop">${drop}</span></div>`;}).join('');
+funnelInsight.innerHTML = `<b>이탈 핵심 구간:</b> 조회→장바구니 <b>${f.view_to_cart_pct}%</b>, 장바구니→구매 <b>${f.cart_to_purchase_pct}%</b>. 상품 상세에서 장바구니로 넘어가는 단계가 최대 이탈 지점.`;
+
+// 쿠폰 실험 (막대 + 라인 콤보)
+const cg = D.coupon;
+new Chart(couponChart, {data:{labels:cg.map(c=>c.group),
+  datasets:[
+    {type:'bar', label:'전환율(%)', data:cg.map(c=>c.conversion_pct), backgroundColor:brand, borderRadius:6, yAxisID:'y'},
+    {type:'bar', label:'7일 재구매율(%)', data:cg.map(c=>c.repurchase_7d_pct), backgroundColor:brand2, borderRadius:6, yAxisID:'y'},
+    {type:'line', label:'객단가(₩)', data:cg.map(c=>c.aov), borderColor:'#f59e0b', backgroundColor:'#f59e0b', yAxisID:'y1', tension:.3, pointRadius:4}
+  ]},
+  options:{maintainAspectRatio:false,
+    plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}},
+    scales:{y:{position:'left',title:{display:true,text:'%'}, grid:{color:'#f1f3f6'}},
+      y1:{position:'right',title:{display:true,text:'₩'}, grid:{display:false}, ticks:{callback:v=>(v/1000)+'k'}},
+      x:{grid:{display:false}}}}});
+const ctrl=cg.find(c=>c.group==='control'), tr=cg.find(c=>c.group==='treatment_rate');
+couponInsight.innerHTML = `<b>해석:</b> 쿠폰 지급(treatment) 그룹이 전환율 ${ctrl.conversion_pct}%→${tr.conversion_pct}%, 재구매율 ${ctrl.repurchase_7d_pct}%→${tr.repurchase_7d_pct}%로 상승. 단 객단가는 할인만큼 하락 → <b>신규·재구매 확보엔 효과적, 마진은 사람 검토 필요.</b>`;
+
+// 지역
+new Chart(regionChart, {type:'bar', data:{labels:D.region.map(r=>r.region),
+  datasets:[{label:'매출비중(%)', data:D.region.map(r=>r.share_pct),
+    backgroundColor:brand, borderRadius:6}]},
+  options:{indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false},
+    tooltip:{callbacks:{label:c=>c.raw+'%'}}},
+    scales:{x:{grid:{color:'#f1f3f6'}}, y:{grid:{display:false}}}}});
+
+// 디바이스
+new Chart(deviceChart, {type:'bar', data:{labels:D.funnel_by_device.map(d=>d.device),
+  datasets:[{label:'조회→구매 전환율(%)', data:D.funnel_by_device.map(d=>d.pv_to_purchase_pct),
+    backgroundColor:[brand,brand2,'#8b5cf6'], borderRadius:6}]},
+  options:{maintainAspectRatio:false, plugins:{legend:{display:false},
+    tooltip:{callbacks:{label:c=>c.raw+'%'}}},
+    scales:{y:{grid:{color:'#f1f3f6'}}, x:{grid:{display:false}}}}});
+</script>
+</body></html>
