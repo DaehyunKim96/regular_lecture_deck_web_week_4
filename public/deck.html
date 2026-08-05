@@ -2009,6 +2009,402 @@ code: ERR-PLAYAUTH-90403</pre>
   </section>
 
 <!-- ══════════════════════════════════════════════════
+     [telegram] 메시징 연결 실습 · Telegram · 7장 (디바이더 포함)
+     ══════════════════════════════════════════════════ -->
+
+  <section class="slide divider">
+    <div class="content">
+      <div class="partno">T</div>
+      <div class="partlabel">TELEGRAM</div>
+      <h2>프롬프트만으로 —<br>텔레그램 자동 발송까지</h2>
+      <p class="lead">MCP 연결 없이 터미널 명령·웹 검색 같은 기본 도구만으로<br>봇 토큰 하나로 텔레그램 발송까지 이어간다</p>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · TELEGRAM</div>
+    <aside class="note">PlayMCP 실습과 바로 대비시킨다 — PlayMCP는 MCP 서버를 통한 연결이었다면, 이번은 별도 MCP 없이 Claude Code의 기본 도구(터미널로 API 직접 호출·웹 검색)만으로 텔레그램 Bot API를 다루는 방식이라는 차이가 핵심이다. "봇 생성은 사람이, 그 다음은 전부 프롬프트"라는 이번 실습의 결론을 미리 예고하고 시작한다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">텔레그램 연동 실습 · 개요</div>
+      <h2 class="sm">봇 하나로 —<br><span class="hl">사람 몫과 AI 몫을 나눈다</span></h2>
+      <p class="sub" style="margin-top:.6rem;font-size:clamp(14px,1.1vw,20px);max-width:74rem">Claude가 <b class="navy">터미널 명령 실행 · 웹 검색 같은 기본 도구만으로</b> 목표(텔레그램 발송)를 <b class="accent">프롬프트 지시만으로 달성</b>한 실전 세션 기록.</p>
+      <div class="sheet tight" style="margin-top:1.1rem">
+        <div class="tag">이 실습에서 배우는 것</div>
+        <div class="rowline"><span class="no">1</span><b>역할 구분</b><span>텔레그램 봇은 반드시 사람이 직접 만들어야 하는 부분(BotFather)과, Claude에게 맡길 수 있는 부분을 구분</span></div>
+        <div class="rowline"><span class="no">2</span><b>실행 단계 이해</b><span>자연어 프롬프트 하나가 Claude 내부에서 어떤 실행 단계로 이어지는지 이해</span></div>
+      </div>
+      <div class="callout" style="margin-top:1.1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">사전 준비 —</b> Telegram 계정 · Claude Code(터미널 명령 실행·웹 검색이 가능한 AI 코딩 에이전트) · <b class="accent">실제 고객정보·주민번호 등 민감정보는 사용하지 않음</b></p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 텔레그램 실습</div>
+    <aside class="note">앞선 PlayMCP 실습이 "연결 자체가 막힌 사례"였다면, 이번은 "끝까지 성공한 사례"라는 톤 차이를 짚어주면 좋다. 이 실습의 목적이 단순히 "텔레그램 보내는 법"이 아니라, 어디까지가 사람의 일이고 어디부터 AI에게 맡길 수 있는지를 감 잡는 것이라는 걸 강조한다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">텔레그램 연동 실습 · 0단계, 봇 만들기</div>
+      <h2 class="sm">Claude는 텔레그램 계정을 —<br><span class="hl">대신 조작할 수 없다</span></h2>
+      <div class="sheet tight" style="margin-top:.9rem">
+        <div class="tag">사람이 직접 · 5단계</div>
+        <div class="rowline"><span class="no">1</span><b>BotFather 검색</b><span>Telegram 앱에서 <code>@BotFather</code>를 검색해 대화 시작</span></div>
+        <div class="rowline"><span class="no">2</span><b>/newbot 입력</b><span>봇 생성 명령</span></div>
+        <div class="rowline"><span class="no">3</span><b>이름 정하기</b><span>표시 이름(예: <code>Test Bot</code>)과 <code>bot</code>으로 끝나는 username(예: <code>ai_auto_v1_bot</code>)</span></div>
+        <div class="rowline"><span class="no">4</span><b>API 토큰 수령</b><span><b class="accent">비밀번호와 동일하게 취급</b> — 화면 공유·채팅·저장소에 그대로 남기지 않음</span></div>
+        <div class="rowline"><span class="no">5</span><b>첫 메시지 보내기</b><span>봇에게 <code>/start</code>나 아무 메시지나 하나 전송 — <b class="navy">없으면 봇이 먼저 메시지를 보낼 수 없음</b></span></div>
+      </div>
+      <div class="callout" style="margin-top:1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">여기까지 마치면 —</b> 손에 남는 건 <b class="accent">봇 토큰</b>과 <b class="accent">"봇에게 메시지를 보낸 적 있다"는 상태</b> 둘뿐 · 이후 단계는 전부 프롬프트로 위임 가능</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 텔레그램 실습</div>
+    <aside class="note">이 장 전체가 "Claude에게 맡길 수 없는 유일한 구간"이라는 걸 명확히 한다. 특히 4번(토큰 보안)과 5번(먼저 메시지 보내기)을 강조 — 5번을 건너뛰면 다음 장의 chat_id 조회 자체가 실패한다는 걸 미리 알려주면 다음 장 이해가 빨라진다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">텔레그램 연동 실습 · 세션 진행 ①</div>
+      <h2 class="sm">토큰 하나로 시작해 —<br><span class="hl">chat_id를 찾아낸다</span></h2>
+      <table class="compact" style="max-width:98rem;margin-top:.8rem">
+        <tr><th style="width:3rem">#</th><th style="width:17rem">사람 입력</th><th style="width:26rem">Claude가 실행한 것</th><th>결과</th></tr>
+        <tr><td><b class="serif">1</b></td><td>봇 토큰을 채팅에 붙여넣음</td><td>토큰을 확인하고, <code>chat_id</code>를 알아내기 위해 봇에게 먼저 메시지를 보내달라고 요청</td><td>사람이 봇과 대화 시작</td></tr>
+        <tr><td><b class="serif">2</b></td><td>"보냈어"</td><td>터미널에서 텔레그램 서버에 받은 메시지 목록을 조회(HTTP 요청) → 처음엔 빈 결과</td><td>메시지 미확인 — 스크린샷으로 재확인 요청</td></tr>
+        <tr style="background:rgba(207,79,38,.07)"><td><b class="serif accent">3</b></td><td>스크린샷으로 "hi" · "hi hello" 등 발송 내역 공유</td><td>같은 조회를 다시 실행</td><td class="yes"><b class="accent">chat_id 정상 확보</b> · 봇 토큰 + chat_id 확보 완료</td></tr>
+      </table>
+      <div class="callout" style="margin-top:1.1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">핵심 —</b> <code>chat_id</code>는 사용자가 먼저 봇에게 메시지를 보낸 뒤에야 조회된다 · 0단계 5번을 건너뛰면 2~3번이 계속 빈 결과로 반복됨</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 텔레그램 실습</div>
+    <aside class="note">2번에서 빈 결과가 나온 걸 실패가 아니라 정상적인 중간 과정으로 짚어준다 — Claude가 바로 포기하지 않고 사람에게 스크린샷을 요청해 재확인한 흐름이 "에이전트가 막히면 사람에게 되묻는다"는 좋은 습관의 예시라는 걸 강조하면 좋다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">텔레그램 연동 실습 · 세션 진행 ②</div>
+      <h2 class="sm">chat_id 확보 후 —<br><span class="hl">날씨 요약까지 자동 발송</span></h2>
+      <table class="compact" style="max-width:98rem;margin-top:.8rem">
+        <tr><th style="width:3rem">#</th><th style="width:17rem">사람 입력</th><th style="width:26rem">Claude가 실행한 것</th><th>결과</th></tr>
+        <tr><td><b class="serif">4</b></td><td>"텔레그램에 오늘 날씨에 대해서 보내줘"</td><td>어느 지역인지 먼저 되물음</td><td>사람이 "서울"이라고 답변</td></tr>
+        <tr style="background:rgba(207,79,38,.07)"><td><b class="serif accent">5</b></td><td>"서울 날씨를 [Bot API 직접 호출 방식]으로 보내줘"</td><td>① 웹 검색으로 오늘 서울 날씨(기상청 자료) 조사 ② 한 문단으로 요약 ③ 터미널에서 텔레그램 서버로 해당 chat_id에 전송 요청 실행</td><td class="yes"><b class="accent">텔레그램에 날씨 요약 메시지 도착 확인</b></td></tr>
+      </table>
+      <div class="callout" style="margin-top:1.2rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">핵심 —</b> 사람은 "서울" 한 단어만 답했을 뿐 · 검색 → 요약 → 전송 3단계는 <b class="accent">전부 Claude가 프롬프트 지시만으로 수행</b></p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 텔레그램 실습</div>
+    <aside class="note">5번 행이 이번 실습의 클라이맥스다 — 웹 검색과 터미널 API 호출이라는 서로 다른 두 도구를 한 프롬프트 안에서 순서대로 조합했다는 점을 강조한다. "Bot API 직접 호출 방식"이라는 표현을 사람이 먼저 지정했다는 것도 짚어주면, 다음 장 프롬프트 5번("어떤 방식으로 보낸 거야?")과 자연스럽게 이어진다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">텔레그램 연동 실습 · 그대로 따라 하기</div>
+      <h2 class="sm">0단계만 마쳤다면 —<br><span class="hl">이 5개 프롬프트로 재현</span></h2>
+      <span class="codecap" style="margin-top:.8rem;display:block;color:var(--accent)">복붙용 프롬프트 — 순서대로 입력</span>
+      <pre class="sm" style="font-size:13px;line-height:1.75">1. 방금 텔레그램 봇을 만들었어. 토큰은 [붙여넣기]야. 이 봇으로 나한테
+   메시지를 보내고 싶은데, chat_id를 어떻게 알아내?
+
+2. (봇에게 메시지를 보낸 뒤) 이제 chat_id 확인해줘
+
+3. 이 봇으로 "테스트 메시지입니다"를 나한테 보내줘
+
+4. 오늘 [지역] 날씨 검색해서 요약한 다음 텔레그램으로 보내줘
+
+5. 방금 그거 어떤 방식으로 보낸 거야?</pre>
+      <div class="callout" style="margin-top:1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">5번 질문의 역할 —</b> 결과만 받고 끝내지 않고 <b class="accent">실행 경로(어떤 API를 어떻게 호출했는지)를 되물어 검증</b>하는 습관</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 텔레그램 실습</div>
+    <aside class="note">이 프롬프트들을 실제로 수강생 각자의 Claude Code에 순서대로 입력해보게 한다 — 1번의 [붙여넣기]는 반드시 본인이 0단계에서 발급받은 토큰으로, 4번의 [지역]은 원하는 지역으로 바꿔 넣어야 한다는 걸 상기시킨다. 5번은 실습을 위한 확인용 질문이지 필수는 아니지만, 블랙박스로 넘어가지 않고 실행 경로를 되짚는 습관을 들이는 데 유용하다고 짚어준다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">텔레그램 연동 실습 · 정리</div>
+      <h2 class="sm">봇 생성은 사람 —<br><span class="hl">그 다음은 전부 프롬프트</span></h2>
+      <p class="sub" style="margin-top:.6rem;font-size:clamp(14px,1.1vw,20px);max-width:76rem">사람이 직접 해야 하는 구간은 <b class="navy">BotFather로 봇을 만들고 토큰을 발급받는 0단계</b>뿐이다. 이후 <code>chat_id</code> 조회 → 정보 검색·요약 → 메시지 전송까지는 <b class="accent">자연어 프롬프트만으로</b> Claude가 터미널 명령과 웹 검색을 조합해 수행했다.</p>
+      <div class="callout" style="margin-top:1.2rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">출처 —</b> <a href="https://core.telegram.org/bots/api" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:underline">Telegram Bot API 공식 문서 ↗</a></p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 텔레그램 실습</div>
+    <aside class="note">PlayMCP 실습과 짝을 지어 마무리한다 — 하나는 MCP 서버 연결이 막힌 사례, 다른 하나는 MCP 없이 기본 도구만으로 끝까지 성공한 사례. 두 실습을 겹쳐 보면 "MCP가 없다고 못 하는 게 아니라, 공식 API 문서만 있으면 터미널 호출로도 충분히 자동화할 수 있다"는 메시지로 정리된다.</aside>
+  </section>
+
+<!-- ══════════════════════════════════════════════════
+     [gemini] 공지사항 요약 자동화 · Python + Gemini + Telegram · 8장 (디바이더 포함)
+     ══════════════════════════════════════════════════ -->
+
+  <section class="slide divider">
+    <div class="content">
+      <div class="partno">G</div>
+      <div class="partlabel">GEMINI + TELEGRAM</div>
+      <h2>공지사항 요약 자동화 —<br>프로그램을 프롬프트로 만든다</h2>
+      <p class="lead">긴 사내 공지를 요약해 텔레그램으로 보내는 프로그램<br>코드는 Claude가 쓰고, 요약은 Gemini가 한다</p>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · GEMINI</div>
+    <aside class="note">앞의 텔레그램 실습이 "메시지 한 건 보내기"였다면, 이번은 "매번 반복할 수 있는 프로그램을 만들기"로 한 단계 올라간다는 걸 짚어준다. 비개발자 수강생이 "프로그램"이라는 단어에 긴장할 수 있으니, 코드는 한 줄도 직접 안 쓰고 프롬프트만 입력한다는 걸 먼저 안심시키고 시작한다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">공지사항 요약 실습 · 역할 분담</div>
+      <h2 class="sm">요약하는 건 Claude가 아니다 —<br><span class="hl">Gemini가 한다</span></h2>
+      <div class="rig" style="margin-top:1.6rem">
+        <div class="bx"><b>사람</b><span>공지사항 파일 · API 키 준비<br><b class="navy">프롬프트로 지시</b></span></div>
+        <div class="op">→</div>
+        <div class="bx core"><b>Claude</b><span>코드 작성 · 실행<br><b class="navy">요약은 하지 않음</b></span></div>
+        <div class="op">→</div>
+        <div class="bx res"><b>Gemini API</b><span>실제 텍스트 요약<br><b class="accent">요약문 생성 담당</b></span></div>
+        <div class="op">→</div>
+        <div class="bx"><b>Telegram</b><span>요약 결과 수신<br><span class="sub">내 메신저로 도착</span></span></div>
+      </div>
+      <div class="callout" style="margin-top:1.6rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">Claude의 역할 —</b> "공지사항을 읽어 Gemini에게 넘기고, Gemini가 만든 요약을 텔레그램으로 보내는" <b class="accent">코드를 작성하고 실행하는 것뿐</b></p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 공지사항 요약</div>
+    <aside class="note">이 그림이 이번 실습 전체의 지도다. "왜 Claude가 직접 요약하지 않고 Gemini를 부르나요?"라는 질문이 반드시 나오는데 — 실무에서는 요약 엔진을 언제든 갈아끼울 수 있어야 하고, 프로그램이 한 번 만들어지면 사람 없이도 반복 실행된다는 점이 핵심이라고 답한다. Claude는 이번에 "일하는 사람"이 아니라 "일하는 프로그램을 만드는 사람" 역할이라는 비유가 잘 통한다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">공지사항 요약 실습 · 사전 준비</div>
+      <h2 class="sm">사람이 먼저 챙길 것 —<br><span class="hl">딱 세 가지</span></h2>
+      <div class="sheet tight" style="margin-top:.9rem">
+        <div class="tag">준비물 3가지</div>
+        <div class="rowline"><span class="no">1</span><b>공지사항 파일</b><span>요약 대상이 되는 장문 텍스트(<code>.md</code>·<code>.txt</code>) — 사내 공지·정책 변경 안내처럼 <b class="navy">500자 이상</b>이면 실습 효과 좋음</span></div>
+        <div class="rowline"><span class="no">2</span><b>Gemini API 키</b><span><a href="https://aistudio.google.com/" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:underline">Google AI Studio ↗</a> 로그인 → <code>Get API key</code>에서 발급 · <b class="accent">비밀번호와 동일 취급</b></span></div>
+        <div class="rowline"><span class="no">3</span><b>텔레그램 봇 토큰 · chat_id</b><span>앞선 텔레그램 실습에서 이미 확보한 값 그대로 재사용</span></div>
+      </div>
+      <a href="assets/files/announcement.md" download="announcement.md" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.1rem;padding:.65rem 1.2rem;border:1.5px solid var(--navy);border-radius:.4rem;color:var(--navy);font-weight:700;font-size:clamp(13px,1vw,16px);text-decoration:none">⬇ 실습용 공지사항 파일 내려받기 (announcement.md)</a>
+      <p class="sub" style="margin-top:.7rem;font-size:clamp(12px,.95vw,16px)">샘플 공지 — "2026년 3분기 사옥 이전 및 근무 환경 변경 안내" · 이전 일정 · 준비 사항 · 좌석제 · 주차 · 식대 · 셔틀 · FAQ 포함 (교육용 가상 시나리오)</p>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 공지사항 요약</div>
+    <aside class="note">공지사항 파일을 미리 준비 못 한 분들을 위해 샘플을 바로 내려받게 한다 — 표·목록·FAQ가 섞인 실제 사내 공지 형태라 요약 품질 차이를 체감하기 좋다. 3번은 앞 실습을 건너뛴 분이 있으면 여기서 잠깐 멈추고 BotFather부터 다시 안내해야 한다. 2번 API 키는 발급 화면을 강사가 직접 시연해주는 게 가장 빠르다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">공지사항 요약 실습 · .env 이해하기</div>
+      <h2 class="sm">비밀번호를 코드에 적으면 —<br><span class="hl">코드를 공유하는 순간 함께 샌다</span></h2>
+      <p class="sub" style="margin-top:.6rem;font-size:clamp(13px,1.05vw,19px);max-width:72rem"><code>.env</code>는 API 키·토큰 같은 <b class="navy">비밀값만 따로 모아두는 파일</b> — 프로그램은 실행될 때 <code>.env</code>를 읽어 필요한 값을 불러온다. 코드 본문에는 값이 남지 않으므로 코드만 따로 공유해도 안전.</p>
+      <table class="compact" style="max-width:96rem;margin-top:.9rem">
+        <tr><th style="width:16rem">변수명</th><th style="width:26rem">설명</th><th>어디서 얻나</th></tr>
+        <tr><td><code>GEMINI_API_KEY</code></td><td>요약 요청을 보낼 때 쓰는 Gemini 인증키</td><td>Google AI Studio의 <code>Get API key</code></td></tr>
+        <tr><td><code>TELEGRAM_BOT_TOKEN</code></td><td>메시지를 보낼 봇의 인증 토큰</td><td>BotFather가 봇 생성 시 발급</td></tr>
+        <tr style="background:rgba(207,79,38,.07)"><td><code>TELEGRAM_CHAT_ID</code></td><td>메시지를 받을 대상의 고유 번호</td><td><code>getUpdates</code> 조회로 확인 — 앞선 텔레그램 실습 참고</td></tr>
+        <tr><td><code>GEMINI_MODEL</code></td><td>사용할 Gemini 모델 이름 (선택 · 기본값 있음)</td><td>필요할 때만 변경</td></tr>
+      </table>
+      <div class="callout" style="margin-top:1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">저장소 규칙 —</b> 값이 빠진 <code>.env.example</code>만 커밋 · <b class="accent">값이 채워진 <code>.env</code>는 각자 컴퓨터에만</b> 보관</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 공지사항 요약</div>
+    <aside class="note">비개발자에게 가장 낯선 개념이라 시간을 조금 더 쓴다. "회사 출입카드를 코드에 적어두는 것과 같다"는 비유가 잘 통한다. 앞서 발표자료 배포 실습에서 "Private 저장소여도 배포 페이지는 공개된다"고 배운 것과 같은 맥락 — 비밀값은 처음부터 분리해두는 습관이라는 걸 연결해준다. .env 파일을 직접 만들 필요는 없고, 다음 장 프롬프트 2번에서 Claude가 대신 만들어준다는 것도 미리 안심시킨다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">공지사항 요약 실습 · 세션 진행</div>
+      <h2 class="sm">프롬프트 네 번에 —<br><span class="hl">프로그램이 완성되고 실행된다</span></h2>
+      <table class="compact" style="max-width:98rem;margin-top:.8rem">
+        <tr><th style="width:3rem">#</th><th style="width:20rem">사람이 입력한 프롬프트</th><th style="width:28rem">Claude가 실행한 것</th><th>결과</th></tr>
+        <tr><td><b class="serif">1</b></td><td>"코드는 Claude가 만들고, 실제 요약은 Gemini가 하게 해줘. 공지사항을 요약해 텔레그램으로 보내는 프로그램을 만들어줘"</td><td>비슷한 기존 예제(업무 로그 요약 프로그램) 구조를 재사용하겠다고 제안</td><td>사람이 진행 방향에 동의</td></tr>
+        <tr style="background:rgba(207,79,38,.07)"><td><b class="serif accent">2</b></td><td><b class="accent">"python으로 해줘"</b></td><td>언어를 Python으로 전환 — 파일 읽기 → Gemini API 호출 → 텔레그램 전송 순서의 스크립트, <code>requirements.txt</code>, <code>.env.example</code> 작성 후 가상환경 생성·패키지 설치</td><td class="yes">실행 가능한 상태로 프로그램 완성</td></tr>
+        <tr><td><b class="serif">3</b></td><td>Gemini API 키를 채팅에 붙여넣음</td><td>붙여넣은 키 + 앞 실습에서 확보한 봇 토큰·chat_id를 합쳐 <code>.env</code> 생성</td><td>실행에 필요한 값 전부 확보</td></tr>
+        <tr><td><b class="serif">4</b></td><td><span class="sub">(자동 진행)</span></td><td>프로그램 실행 — 공지사항을 읽어 "이 형식으로 요약해줘"라는 지시와 함께 Gemini API에 전달 → 받은 요약을 그대로 텔레그램으로 전송</td><td class="yes">콘솔에 요약 출력 · 텔레그램 도착(<code>message_id</code> 확인)</td></tr>
+      </table>
+      <div class="callout" style="margin-top:1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">2번 주목 —</b> 언어를 바꿔달라는 <b class="accent">중간 수정 요청 한 줄</b>에 처음부터 다시 쓰지 않고 구조를 유지한 채 Python으로 전환</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 공지사항 요약</div>
+    <aside class="note">2번이 이번 장의 관전 포인트다 — "python으로 해줘" 다섯 글자에 스크립트·의존성 파일·가상환경 세팅까지 한 번에 따라온다는 걸 강조한다. 앞서 배운 "국소 수정" 원칙이 실제로 작동한 사례이기도 하다. 4번이 사람 입력 없이 자동 진행된 이유는 3번에서 필요한 값이 전부 채워졌기 때문이라는 인과를 짚어주면 흐름이 명확해진다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">공지사항 요약 실습 · 실행 원칙</div>
+      <h2 class="sm">Claude가 지킨 —<br><span class="hl">세 가지 원칙</span></h2>
+      <div class="steps" style="margin-top:1.8rem">
+        <div class="step done"><div class="dot">①</div><b>비밀값 분리</b><span>코드에 키를 적지 않고 <code>.env</code>로 — 코드만 공유해도 안전</span></div>
+        <div class="step done"><div class="dot">②</div><b>요약은 위임</b><span>스스로 판단하지 않고 <b class="accent">반드시 Gemini API 호출</b> — 응답을 그대로 사용</span></div>
+        <div class="step done"><div class="dot">③</div><b>결과 확인</b><span>콘솔에 요약 원문 출력 + 전송 성공(<code>message_id</code>) 확인 후 완료 보고</span></div>
+      </div>
+      <div class="callout" style="margin-top:1.8rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">②의 의미 —</b> 텔레그램에 도착한 요약 문구는 <b class="accent">Claude가 지어낸 것이 아니라 Gemini가 생성한 결과</b> · 프로그램은 원문과 형식 지시만 전달</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 공지사항 요약</div>
+    <aside class="note">②를 실습 중에 직접 검증하는 방법을 알려주면 좋다 — .env의 GEMINI_API_KEY를 일부러 틀리게 바꾸고 실행하면 프로그램이 멈춘다. Claude가 요약했다면 키가 틀려도 결과가 나왔을 것이므로, 이게 곧 "정말 Gemini가 요약했다"는 증거가 된다. ③은 3회차 스크린샷 검증 루프와 같은 원칙(결과를 사람이 눈으로 확인할 수 있게)의 반복이라는 걸 연결해준다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">공지사항 요약 실습 · 그대로 따라 하기</div>
+      <h2 class="sm">준비물 세 가지가 있다면 —<br><span class="hl">이 프롬프트로 재현</span></h2>
+      <span class="codecap" style="margin-top:.8rem;display:block;color:var(--accent)">복붙용 프롬프트 — 순서대로 입력</span>
+      <pre class="sm" style="font-size:12.5px;line-height:1.7">1. 요약할 공지사항 파일이 [경로]에 있어. 이 내용을 Gemini API로 요약해서
+   텔레그램으로 보내는 파이썬 프로그램을 만들어줘.
+   실제 요약은 네가 하지 말고 Gemini가 하게 해줘.
+
+2. Gemini API 키는 [붙여넣기]야. 텔레그램 봇 토큰은 [붙여넣기],
+   chat_id는 [붙여넣기]야. .env 만들고 실행해줘.
+
+3. 실행 결과 보여줘
+
+4. (선택) 요약 형식을 [원하는 형식]으로 바꿔줘
+   — 예: "표 형식으로" · "3줄 이내로" · "담당자별로 묶어서"</pre>
+      <div class="callout" style="margin-top:1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">4번이 진짜 실습 —</b> 형식을 바꿔 다시 실행해보면 <b class="accent">같은 원문에서 다른 요약</b>이 나옴 · 프로그램은 그대로 두고 <b class="navy">지시만 바꿔 재사용</b>하는 감각</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 공지사항 요약</div>
+    <aside class="note">1번의 [경로]는 앞 장에서 내려받은 announcement.md 위치를 넣으면 된다 — 파일을 Claude Code 프로젝트 폴더로 먼저 옮겨두라고 안내한다. 시간이 남으면 4번을 각자 다르게 시도해보고 결과를 공유하게 하면 좋은 마무리가 된다. 여기서 나온 요약 형식 차이가 곧 "프롬프트가 결과를 바꾼다"는 이번 강의 전체의 메시지와 이어진다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">공지사항 요약 실습 · 정리</div>
+      <h2 class="sm">한 번 만들어두면 —<br><span class="hl">공지가 바뀌어도 다시 쓴다</span></h2>
+      <p class="sub" style="margin-top:.6rem;font-size:clamp(14px,1.1vw,20px);max-width:76rem">사람이 준비한 건 <b class="navy">공지사항 파일 · Gemini API 키 · 텔레그램 봇 정보</b> 세 가지뿐. 코드 작성 · 가상환경 구성 · <code>.env</code> 생성 · 실행까지는 전부 프롬프트로 위임했고, <b class="accent">요약 문구는 Gemini가, 전달은 텔레그램이</b> 담당했다.</p>
+      <div class="callout" style="margin-top:1.2rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">확장하면 —</b> 요약 대상 파일만 바꾸면 회의록 · 계약서 · 뉴스레터에도 그대로 적용 · <b class="navy">예약 실행과 결합하면 매일 아침 자동 발송</b>까지 가능</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 공지사항 요약</div>
+    <aside class="note">이번 회차 실습 세 개(PlayMCP · 텔레그램 · 공지사항 요약)를 한 줄로 꿰어 마무리한다 — 연결(MCP), 발송(Bot API), 그리고 처리 자동화(프로그램화)로 단계가 올라왔다는 흐름이다. 마지막 확장 아이디어는 다음 회차 예고 성격으로 짧게만 던지고 Q&A로 넘어간다.</aside>
+  </section>
+
+<!-- ══════════════════════════════════════════════════
+     [crawl] 웹페이지 크롤링 + 요약 + 전송 · 8장 (디바이더 포함)
+     ══════════════════════════════════════════════════ -->
+
+  <section class="slide divider">
+    <div class="content">
+      <div class="partno">C</div>
+      <div class="partlabel">CRAWLING</div>
+      <h2>웹페이지에서 직접 —<br>정보를 가져온다</h2>
+      <p class="lead">앞 실습은 내가 가진 파일을 요약했다면<br>이번엔 웹에서 자료를 긁어와 요약하고 보낸다</p>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · CRAWLING</div>
+    <aside class="note">앞 실습(공지사항 요약)과의 차이를 한 문장으로 짚는다 — 요약 대상이 "내 컴퓨터의 파일"에서 "인터넷의 웹페이지"로 바뀌었을 뿐, 뒤쪽 절반(Gemini 요약 → 텔레그램 전송)은 완전히 같다. 새로 배우는 건 앞부분의 크롤링 한 조각뿐이라고 안심시키고 시작한다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">크롤링 실습 · 크롤링이란</div>
+      <h2 class="sm">브라우저로 열어 보는 대신 —<br><span class="hl">프로그램이 대신 열어 본다</span></h2>
+      <p class="sub" style="margin-top:.6rem;font-size:clamp(14px,1.1vw,20px);max-width:74rem"><b class="navy">크롤링(crawling)</b> — 사람이 브라우저로 웹사이트를 열어 보듯, <b class="accent">프로그램이 웹페이지를 대신 열어 필요한 부분(제목·링크 등)만 뽑아오는 작업</b>.</p>
+      <div class="rig" style="margin-top:1.4rem;--bxpad:1.1rem">
+        <div class="bx"><b>웹페이지</b><span>Hacker News<br><span class="sub">글 목록이 올라온 사이트</span></span></div>
+        <div class="op">→</div>
+        <div class="bx core"><b>크롤링</b><span>제목·링크만 뽑아냄<br><b class="navy">이번에 새로 배우는 부분</b></span></div>
+        <div class="op">→</div>
+        <div class="bx res"><b>Gemini</b><span>목록을 요약<br><span class="sub">앞 실습과 동일</span></span></div>
+        <div class="op">→</div>
+        <div class="bx"><b>Telegram</b><span>요약 도착<br><span class="sub">앞 실습과 동일</span></span></div>
+      </div>
+      <div class="callout" style="margin-top:1.4rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">역할은 그대로 —</b> Claude는 <b class="accent">프로그램을 작성·실행할 뿐</b> · 실제 요약은 Gemini API가 수행</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 크롤링 실습</div>
+    <aside class="note">"크롤링"이라는 단어를 처음 듣는 분이 대부분이므로 정의를 천천히 읽어준다. 그림에서 가운데 두 칸(크롤링·Gemini)만 새로 배우고 나머지는 이미 해본 것이라는 걸 손으로 짚어가며 보여주면 부담이 확 줄어든다. 뉴스 모니터링·경쟁사 가격 확인처럼 실무에서 크롤링을 쓰는 예를 한두 개 들어주면 동기가 생긴다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">크롤링 실습 · 사전 준비</div>
+      <h2 class="sm">아무 사이트나 긁으면 안 된다 —<br><span class="hl">robots.txt 먼저 확인</span></h2>
+      <div class="sheet tight" style="margin-top:.9rem">
+        <div class="tag">준비물 3가지</div>
+        <div class="rowline"><span class="no">1</span><b>크롤링할 페이지</b><span><a href="https://news.ycombinator.com/" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:underline">news.ycombinator.com ↗</a> (Hacker News) — 개발자용 해외 IT 뉴스 게시판 · 제목·링크가 표로 단순 나열돼 <b class="navy">크롤링 연습용으로 널리 쓰임</b></span></div>
+        <div class="rowline"><span class="no">2</span><b>Gemini API 키</b><span><a href="https://aistudio.google.com/" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:underline">Google AI Studio ↗</a> → <code>Get API key</code> · 비밀번호와 동일 취급</span></div>
+        <div class="rowline"><span class="no">3</span><b>텔레그램 봇 토큰 · chat_id</b><span>앞선 실습에서 확보한 값 그대로 재사용</span></div>
+      </div>
+      <div class="callout myth" style="margin-top:1.1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif"><code>robots.txt</code>란 —</b> 사이트 주소 뒤에 <code>/robots.txt</code>를 붙이면 열리는 텍스트 파일 · 운영자가 <b class="navy">"이 부분은 프로그램이 가져가도 된다 / 안 된다"를 미리 밝혀둔 규칙표</b> — 크롤러가 접속 전에 먼저 확인하라고 만든 안내문</p></div>
+      <p class="sub" style="margin-top:.8rem;font-size:clamp(12px,.95vw,16px)">확인 결과 — <a href="https://news.ycombinator.com/robots.txt" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:underline">news.ycombinator.com/robots.txt ↗</a> 기준 메인 페이지(<code>/</code>)는 막혀 있지 않아 크롤링 가능 · 로그인·투표·신고 등 계정 관련 경로만 <code>Disallow</code></p>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 크롤링 실습</div>
+    <aside class="note">robots.txt는 이번 실습에서 가장 중요한 개념이라 반드시 브라우저로 직접 열어 보여준다 — 실제로 보면 몇 줄짜리 단순한 텍스트라 오히려 안심한다. "법적 구속력이 있느냐"는 질문이 나올 수 있는데, 법이라기보다 업계 약속에 가깝고 이를 무시하면 차단당하거나 분쟁이 생길 수 있다고 답하면 충분하다. 회사 업무로 크롤링할 때는 반드시 사전에 확인하는 습관을 들이라고 강조한다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">크롤링 실습 · 크롤러의 원리</div>
+      <h2 class="sm">크롤러는 —<br><span class="hl">받아오고, 골라낸다</span></h2>
+      <div class="cols c2 top" style="margin-top:1rem;gap:2.4vw">
+        <div>
+          <div class="sheet tight">
+            <div class="tag">2단계</div>
+            <div class="rowline"><span class="no">1</span><b>원본 받아오기</b><span>브라우저 없이 프로그램이 같은 요청을 서버에 보내 <b class="navy">HTML 원본 텍스트</b>를 그대로 받음 — 파이썬 <code>requests</code>가 담당</span></div>
+            <div class="rowline"><span class="no">2</span><b>필요한 부분 골라내기(파싱)</b><span>HTML의 <code>&lt;태그&gt;</code> 구조를 기준으로 원하는 조각만 잘라냄 — <code>BeautifulSoup</code>이 담당</span></div>
+          </div>
+          <div class="callout" style="margin-top:1rem"><p style="font-size:clamp(12px,1vw,17px)"><b class="serif">그래서 —</b> 사이트마다 HTML 구조가 다르면 <b class="accent">크롤러도 그 사이트에 맞게 다시 만들어야 함</b></p></div>
+        </div>
+        <div>
+          <span class="codecap" style="display:block">Hacker News의 반복 구조</span>
+          <pre class="sm" style="font-size:12px;line-height:1.6">&lt;tr class="athing"&gt;
+  &lt;span class="titleline"&gt;
+    &lt;a href="https://example.com/article"&gt;글 제목&lt;/a&gt;
+  &lt;/span&gt;
+&lt;/tr&gt;</pre>
+          <p class="sub" style="margin-top:.7rem;font-size:clamp(11px,.92vw,16px)"><code>class="athing"</code>이 붙은 상자마다 → 그 안 <code>&lt;a&gt;</code> 태그의 <b>글자가 제목</b>, <code>href</code> 값이 <b>링크</b> · 이 규칙이 페이지 전체에 반복되므로 상자를 훑으며 쌓으면 그게 <b class="accent">크롤링한 목록</b></p>
+        </div>
+      </div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 크롤링 실습</div>
+    <aside class="note">"크롤러를 만든다"가 막연하게 들리는 걸 두 단계로 쪼개 없애주는 장이다. 오른쪽 HTML은 읽을 줄 몰라도 되고 "같은 모양의 상자가 반복된다"는 것만 눈으로 확인하면 충분하다고 안심시킨다. 실제 Hacker News 페이지에서 우클릭 → 페이지 소스 보기를 띄워 같은 구조가 반복되는 걸 보여주면 이해가 즉시 된다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">크롤링 실습 · 세션 진행</div>
+      <h2 class="sm">프롬프트 한 번 뒤 —<br><span class="hl">나머지는 자동으로 이어진다</span></h2>
+      <table class="dense" style="max-width:98rem;margin-top:.8rem">
+        <tr><th style="width:2.6rem">#</th><th style="width:19rem">사람이 입력한 프롬프트</th><th style="width:30rem">Claude가 실행한 것</th><th>결과</th></tr>
+        <tr><td><b class="serif">1</b></td><td>"매우 간단한 페이지를 파이썬으로 크롤링하고, 그 결과를 Gemini API로 요약해서 텔레그램으로 보내줘"</td><td>어떤 페이지를 크롤링할지 먼저 질문 — 사이트마다 구조와 이용 규칙이 다르기 때문</td><td>사람이 Hacker News 메인 선택</td></tr>
+        <tr style="background:rgba(207,79,38,.07)"><td><b class="serif accent">2</b></td><td><span class="sub">(자동 진행)</span></td><td><b class="accent"><code>robots.txt</code>를 먼저 확인</b>해 메인 페이지 크롤링이 막혀 있지 않은지 검토</td><td class="yes">크롤링 가능 확인</td></tr>
+        <tr><td><b class="serif">3</b></td><td><span class="sub">(자동 진행)</span></td><td>파이썬 프로그램 작성 — ①페이지 가져오기 ②제목·링크 파싱 ③Gemini 요약 요청 ④텔레그램 전송 · <code>requirements.txt</code>·<code>.env.example</code> 작성 후 가상환경 구성</td><td class="yes">프로그램 완성</td></tr>
+        <tr style="background:rgba(207,79,38,.07)"><td><b class="serif accent">4</b></td><td><span class="sub">(자동 진행)</span></td><td>전체 실행 전 <b class="accent">"제목·링크를 제대로 뽑는지"만 먼저 짧게 테스트</b></td><td class="yes">상위 5개 정상 출력 — 파싱 검증 완료</td></tr>
+        <tr><td><b class="serif">5</b></td><td><span class="sub">(자동 진행)</span></td><td>앞 실습에서 확보한 키·토큰·chat_id를 재사용해 <code>.env</code> 생성 후 전체 실행</td><td class="yes">상위 15개 출력 → Gemini 요약 → 텔레그램 전송 완료(<code>message_id</code>)</td></tr>
+      </table>
+      <div class="callout" style="margin-top:.9rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">사람이 한 건 —</b> 첫 프롬프트 하나와 <b class="accent">"어느 사이트?"에 대한 답 한 번</b> · 2~5번은 전부 Claude가 이어서 진행</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 크롤링 실습</div>
+    <aside class="note">1번에서 Claude가 바로 코드를 짜지 않고 "어떤 페이지냐"를 되물은 것이 좋은 신호라는 걸 짚어준다 — 앞 텔레그램 실습에서 "어느 지역이냐"를 되물은 것과 같은 패턴이다. 2번과 4번이 이번 실습에서 배울 두 가지 습관(규칙 먼저 확인 · 작은 단위로 먼저 검증)이고 다음 장에서 정리한다고 예고한다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">크롤링 실습 · 실행 원칙</div>
+      <h2 class="sm">Claude가 지킨 —<br><span class="hl">네 가지 원칙</span></h2>
+      <div class="steps" style="margin-top:1.8rem">
+        <div class="step done"><div class="dot">①</div><b>규칙 먼저 확인</b><span>바로 긁지 않고 <code>robots.txt</code>부터 점검</span></div>
+        <div class="step done"><div class="dot">②</div><b>작은 단위 먼저 검증</b><span>전체 실행 전 제목 5개만 뽑아 확인</span></div>
+        <div class="step done"><div class="dot">③</div><b>요약은 위임</b><span>스스로 판단하지 않고 <b class="accent">Gemini API 호출</b></span></div>
+        <div class="step done"><div class="dot">④</div><b>결과 확인</b><span>원본 목록·요약 원문 출력 후 전송 성공까지 확인</span></div>
+      </div>
+      <div class="callout" style="margin-top:1.8rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">②가 특히 중요 —</b> 크롤링·요약·전송을 한 번에 돌리지 않고 쪼개서 확인하면 <b class="accent">어느 단계에서 문제가 났는지 훨씬 빨리 찾음</b></p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 크롤링 실습</div>
+    <aside class="note">②는 3회차 발표자료 실습의 "진단만 하고 아직 고치지 마"·"아직 코드는 작성하지 마"와 정확히 같은 원칙이라는 걸 연결해준다 — 단계를 쪼개 확인하는 습관이 도구와 무관하게 반복된다는 게 이번 강의 전체를 관통하는 메시지다. ③은 앞 실습에서 이미 다뤘으니 짧게 넘어가도 된다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">크롤링 실습 · 그대로 따라 하기</div>
+      <h2 class="sm">준비물이 있다면 —<br><span class="hl">이 프롬프트로 재현</span></h2>
+      <span class="codecap" style="margin-top:.8rem;display:block;color:var(--accent)">복붙용 프롬프트 — 순서대로 입력</span>
+      <pre class="sm" style="font-size:12px;line-height:1.68">1. [크롤링하고 싶은 페이지 주소]를 파이썬으로 크롤링해서, 글 제목과
+   링크만 가져오는 프로그램을 만들어줘. 시작하기 전에 이 사이트의
+   robots.txt에서 크롤링이 허용되는지부터 확인해줘.
+
+2. 가져온 목록을 Gemini API로 요약해서 텔레그램으로 보내는 부분도
+   이어서 만들어줘. 실제 요약은 네가 하지 말고 Gemini가 하게 해줘.
+
+3. Gemini API 키는 [붙여넣기]야. 텔레그램 봇 토큰은 [붙여넣기],
+   chat_id는 [붙여넣기]야. .env 만들고 실행해줘.
+
+4. 실행 결과 보여줘
+
+5. (선택) 요약 형식을 [원하는 형식]으로 바꿔줘
+   — 예: "5줄 이내로" · "카테고리별로 묶어서" · "링크는 빼고 제목만"</pre>
+      <div class="callout" style="margin-top:1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">1번 마지막 문장이 핵심 —</b> <b class="accent">"robots.txt부터 확인해줘"를 프롬프트에 넣는 습관</b> · 넣지 않으면 확인 없이 바로 크롤링할 수 있음</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 크롤링 실습</div>
+    <aside class="note">1번의 [페이지 주소]는 각자 관심 있는 사이트로 바꿔보게 하되, 로그인이 필요한 페이지나 언론사 기사 본문은 규칙상 막혀 있는 경우가 많으니 처음엔 Hacker News로 따라 하고 그다음에 시도해보라고 안내한다. 5번을 바꿔가며 여러 번 돌려보면 프로그램은 그대로 두고 지시만 바꿔 재사용하는 감각이 생긴다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">크롤링 실습 · 정리</div>
+      <h2 class="sm">주소 하나만 바꾸면 —<br><span class="hl">나만의 뉴스 요약 봇</span></h2>
+      <p class="sub" style="margin-top:.6rem;font-size:clamp(14px,1.1vw,20px);max-width:76rem">사람이 한 건 <b class="navy">사이트를 고르고 프롬프트를 입력한 것</b>뿐. <code>robots.txt</code> 확인 · 크롤러 작성 · 파싱 검증 · <code>.env</code> 생성 · 실행까지 전부 위임했고, <b class="accent">요약은 Gemini가, 전달은 텔레그램이</b> 담당했다.</p>
+      <div class="callout" style="margin-top:1.2rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">확장하면 —</b> 크롤링 대상만 바꿔 업계 뉴스 · 경쟁사 공지 · 채용공고 모니터링에 적용 · <b class="navy">예약 실행과 결합하면 매일 아침 자동 브리핑</b></p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 크롤링 실습</div>
+    <aside class="note">이번 회차 실습 네 개(PlayMCP 연결 → 텔레그램 발송 → 파일 요약 자동화 → 웹 크롤링 자동화)가 계단식으로 쌓여왔다는 걸 마지막으로 정리한다. 확장 아이디어는 각자 업무에 대입해보게 던지고, 구체적인 예약 실행은 다음 회차 예고로 짧게만 언급한 뒤 Q&A로 넘어간다.</aside>
+  </section>
+
+<!-- ══════════════════════════════════════════════════
      [qa] Q&A · 1장
      ══════════════════════════════════════════════════ -->
 
