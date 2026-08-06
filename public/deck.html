@@ -3337,32 +3337,133 @@ ecommerce-sqlite MCP로 이커머스 데이터를 분석하는
     <aside class="note">MCP 용어보다 ‘AI가 DB를 읽는 도구를 갖는다’로 설명한다. 핵심은 실행한 쿼리와 기간을 함께 보여 달라는 검수 요구다. 검증값: 메가패션 38.17% · 하이마트프로 26.10% · 글로우뷰티 11.56% · 상위 3사 75.82% (demo_rehearsal.md 3장). 라이브 질의는 MCP를 켜 둔 상태에서 세 후보 중 청중 호응이 큰 것 하나만 실행 — 예상 정답: ①가전 8% vs 뷰티 20% 수수료율(저마진 의존), ②전환 17.0→27.2% · 재구매 3.5→9.6% 상승하나 객단가 하락, ③모바일 2.5% vs PC 5.4% · 최대 이탈은 조회→장바구니 12.4% (demo_rehearsal.md 8장). 어떤 질문이든 끝에 “기간·지표 정의·실행한 쿼리도 보여줘”를 붙인다.</aside>
   </section>
   <section class="slide">
-    <div class="content cols c2-wide" style="gap:3vw;align-items:start">
+    <div class="content cols" style="grid-template-columns:.52fr 1.48fr;gap:2.2vw;align-items:start">
       <div>
         <div class="kicker">실습 ④ · 이렇게 요청</div>
-        <h2 style="font-size:clamp(26px,2.6vw,46px)">화면 하나도<br><span class="hl">구조화된 지시서</span>로</h2>
-        <p class="sub" style="font-size:clamp(13px,1.1vw,19px);max-width:30rem">형태 · 디자인 · 내용 · 완료 조건 — 작업지시서 틀 그대로 · 오른쪽 한 장이면 화면 전체 생성</p>
-        <a href="/dashboard.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.5em;margin-top:1.6rem;padding:.75em 1.4em;background:var(--accent);color:#fff;font:800 clamp(15px,1.3vw,22px)/1 var(--sans,inherit);border-radius:.6em;text-decoration:none;box-shadow:0 8px 22px rgba(40,30,10,.22)">▶ 완성된 대시보드 열기</a>
-        <p class="sub" style="margin-top:.7rem;font-size:clamp(11px,.9vw,15px);opacity:.7">클릭 시 새 탭에서 실제 결과물 열림 (같은 사이트의 /dashboard.html)</p>
+        <h2 style="font-size:clamp(24px,2.3vw,40px);margin-bottom:.6rem">화면 하나도<br><span class="hl">구조화된 지시서</span>로</h2>
+        <p class="sub" style="font-size:clamp(12px,1vw,17px);max-width:26rem">배경 · 답해야 할 질문 · 데이터 · 만드는 방법 · 지켜야 할 것 — 다섯 덩어리로 나눠 <b class="navy">한 번에 전달</b></p>
+        <div class="callout" style="margin-top:1.3rem;padding:.75rem 1.1rem"><p style="font-size:clamp(11px,.88vw,15px)"><b class="serif">핵심 —</b> 숫자 하드코딩 금지 · 집계는 SQL에서 · 폴더 경계 명시</p></div>
       </div>
-      <pre style="font-size:clamp(11px,.9vw,15.5px);line-height:1.6;max-height:76vh">output/kpi.json의 집계 데이터로 경영진용 대시보드를 만들어줘.
+      <pre class="sm" style="font-size:clamp(8px,.72vw,12px);line-height:1.5;max-height:80vh">`ecommerce.db`(SQLite)에 들어있는 이커머스 데이터를 한눈에 보는 대시보드를 **React + Vite**로 만들어줘.
 
-<span class="ph">[형태]</span> 서버 없이 더블클릭으로 열리는 HTML 파일 하나
- — 데이터는 파일 안에 심고, 차트는 Chart.js 사용
-<span class="ph">[디자인]</span> 밝은 SaaS 스타일(Linear · Stripe 느낌),
- 좌측 메뉴 + 카드형 KPI + 그리드 배치
-<span class="ph">[내용 · 위에서 아래로]</span>
- 1) KPI 카드 5장 — 순매출 · 수수료 수익 · 구매 고객수 ·
-    장바구니→구매 전환율 · 상위3사 매출비중(경고 표시)
- 2) 월별 매출 추이(선) · 카테고리별 매출(도넛)
- 3) 공급사 Top 10 표(비중 막대) · 구매 전환 퍼널
- 4) 쿠폰 A/B 실험(전환 · 재구매 · 객단가) · 지역별 매출
-<span class="ph">[완료 조건]</span>
- - 각 차트 아래 ‘해석 한 줄’을 데이터로 계산해 넣을 것
- - 내일 kpi.json이 바뀌면, 다시 실행만으로 갱신될 것</pre>
+<span class="ph">### 배경</span>
+우리는 여러 공급사가 입점한 이커머스 플랫폼을 운영하고 있어. 데이터는 이미 SQLite로 적재해뒀고, 경영진에게 보고할 대시보드가 필요해.
+지금 답을 알아야 하는 질문은 3개야.
+
+<span class="ph">### 답해야 할 질문 3가지</span>
+**1. 어느 공급사가 매출과 수익 대부분을 차지하나?**
+- 공급사별 매출(`net_amount` 합계)과 수익(`commission_amount` 합계)을 각각 집계해줘
+- 상위 공급사가 전체에서 차지하는 **누적 비중**을 보여줘 (상위 1곳, 상위 3곳이 몇 %인지)
+- 매출 1위와 수익 1위가 다를 수 있어. 수수료율(`commission_rate`)이 공급사마다 7%~20%로 다르거든.
+  **매출은 크지만 수익 기여는 작은 공급사**가 있는지 반드시 짚어줘
+- 한두 곳에 쏠려 있다면 그 자체가 리스크야. 쏠림 정도를 한 문장으로 판단해줘
+
+**2. 고객은 결제 전 어느 단계에서 가장 많이 떠나나?**
+- 퍼널: `product_view` → `add_to_cart` → `begin_checkout` → `purchase`
+- **각 단계별 전환율과 이탈률**을 보여주고, 이탈이 가장 큰 구간을 강조해줘
+- 주의: 이벤트 건수를 그냥 세면 안 돼. 한 세션에서 같은 이벤트가 여러 번 찍힐 수 있으니 **`session_id` 기준 distinct 카운트**로 계산해줘
+- 가능하면 `device_type`, `traffic_source`, `is_member`별로 쪼개서 어느 집단의 이탈이 특히 심한지도 보여줘
+
+**3. 할인 쿠폰을 준 고객이 실제로 더 사고, 다시 돌아오나?**
+- `coupon_experiments` 테이블이 A/B 테스트 결과야. 그룹은 3개: `control`(쿠폰 없음), `treatment_amount`(정액 할인), `treatment_rate`(정률 할인)
+- 그룹별로 **구매전환율**(`first_purchase`가 있는 비율), **재구매율**(`repurchase_7d`), **평균 구매금액**(`net_amount`), **쿠폰 사용률**(`used_coupon`)을 비교해줘
+- 정액 할인과 정률 할인 중 **어느 쪽이 더 효과적인지** 판단해줘
+- 중요: 전환율이 올라도 평균 구매금액이 깎이면 남는 게 없을 수 있어. **할인 비용을 감안해도 이득인지** 같이 따져줘
+
+<span class="ph">### 데이터</span>
+DB 파일: `ecommerce.db` (프로젝트 루트, SQLite) · 기간: 2026-02-16 ~ 2026-06-15
+
+| 테이블 | 행 수 | 주요 컬럼 |
+|---|---:|---|
+| `suppliers` | 15 | supplier_id, supplier_name, category, commission_rate, onboarded_at |
+| `products` | 177 | product_id, product_name, supplier_id, category, base_price |
+| `orders` | 15,000 | order_id, order_date, user_id, supplier_id, category, product_id, quantity, gross_amount, discount_amount, **net_amount**, commission_rate, **commission_amount**, coupon_id, region, channel |
+| `events` | 50,000 | event_id, event_time, user_id, **session_id**, **event_name**, page_name, product_id, traffic_source, device_type, is_member, experiment_group |
+| `coupon_experiments` | 10,000 | experiment_id, user_id, **group_name**, coupon_type, coupon_value, used_coupon, order_count, net_amount, first_purchase, repurchase_7d |
+
+값 참고:
+- `event_name`: page_view / product_view / add_to_cart / begin_checkout / purchase
+- `group_name`: control / treatment_amount / treatment_rate
+- `channel`: app / mobile_web / web
+- `region`: 수도권 / 영남 / 충청 / 호남 / 강원 / 제주
+- 카테고리: 패션 / 가전 / 뷰티 / 식품 / 리빙 / 디지털
+- `events.product_id`는 비어있는 행이 있음(NULL) — 조인할 때 주의
+
+<span class="ph">### 만드는 방법</span>
+**데이터 파이프라인**: React는 브라우저에서 도는 정적 앱이라 SQLite 파일을 직접 못 읽어. 그러니 이렇게 해줘.
+
+1. Python 스크립트(`build_dashboard_data.py`)로 `ecommerce.db`에 SQL을 날려 집계
+2. 결과를 `dashboard/src/data/*.json`으로 저장
+3. React는 그 JSON을 import해서 렌더
+
+집계는 **SQL에서** 끝내줘. 원본 7.5만 행을 그대로 JSON으로 뽑아서 브라우저에서 계산하지 마. 무겁고, 실습에서 SQL을 보여주는 게 목적이야.
+
+**기술 스택**
+- React + Vite (JavaScript, TypeScript 아님 — 수강생 진입장벽 낮추려고)
+- 차트는 Recharts
+- 스타일은 CSS 파일로. Tailwind 같은 빌드 설정 추가는 하지 마
+- 외부 API 호출 없이 완전히 로컬에서 동작해야 함
+
+**화면 구성**
+- 최상단에 핵심 지표 카드 4개 (총 매출, 총 수익, 주문 수, 전체 구매전환율)
+- 그 아래 질문별로 섹션 3개. 각 섹션은 **질문을 제목으로** 달아줘 ("공급사별 매출" 말고 "어느 공급사가 매출과 수익 대부분을 차지하나?")
+- 각 섹션마다 차트 + **한 줄 결론 문장**. 숫자만 던지지 말고 "그래서 뭐?"에 답해줘
+- 한국어 UI, 금액은 천 단위 콤마 (예: 573,009,500원)
+
+<span class="ph">### 지켜야 할 것</span>
+- 코드에 숫자를 하드코딩하지 마. 전부 DB 집계 결과에서 나와야 해
+- 기존 `load_csv_to_sqlite.py`와 `data/`는 건드리지 마. 대시보드는 `dashboard/` 폴더에 새로 만들어
+- 다 만들고 나서 `npm run dev`로 실제 실행해서 화면이 뜨는지 확인하고, 에러가 있으면 고쳐줘
+- 마지막에 실행 방법을 README로 정리해줘</pre>
     </div>
     <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 데이터 분석 실습</div>
-    <aside class="note">이 프롬프트는 실제 dashboard/build_dashboard.py가 만들어진 요구 사항을 역으로 정리한 것 — 실행하면 output/dashboard.html이 나온다. 강조점 두 가지: ①디자인 감각이 없어도 “Linear·Stripe 느낌”처럼 레퍼런스 이름으로 요구할 수 있다, ②완료 조건 두 줄(해석 한 줄 자동 계산, 재실행만으로 갱신)이 이 화면을 일회성 그림이 아니라 운영 가능한 도구로 만든다. 제작 영상 촬영 후 vslot을 &lt;div class="media"&gt;&lt;video&gt;로 교체.</aside>
+    <aside class="note">이 지시서의 구조를 먼저 짚는다 — 배경 · 답해야 할 질문 · 데이터 · 만드는 방법 · 지켜야 할 것. 앞서 배운 작업지시서 틀이 그대로 확장된 형태다. 강조점 세 가지: ①섹션 제목을 "공급사별 매출"이 아니라 질문 그대로 달라고 요구한 점 — 화면이 보고서가 아니라 답변이 된다. ②"session_id 기준 distinct", "events.product_id는 NULL 있음"처럼 데이터의 함정을 미리 알려준 점 — 이걸 안 적으면 에이전트가 조용히 틀린 숫자를 낸다. ③"숫자 하드코딩 금지", "기존 파일 건드리지 마", "다 만들고 npm run dev로 확인"이 완료 조건 역할을 한다. 시간이 없으면 [지켜야 할 것] 네 줄만 읽어도 충분하다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content cols" style="grid-template-columns:.62fr 1.38fr;gap:2.4vw;align-items:start">
+      <div>
+        <div class="kicker">실습 ④ · 프롬프트를 만드는 프롬프트</div>
+        <h2 style="font-size:clamp(24px,2.3vw,40px);margin-bottom:.6rem">앞 장의 지시서도 —<br><span class="hl">직접 쓴 게 아니다</span></h2>
+        <p class="sub" style="font-size:clamp(12px,1vw,17px);max-width:28rem">앞 장의 긴 지시서는 처음부터 손으로 쓴 것이 아님 · <b class="navy">"내가 하려는 걸 남이 그대로 실행할 수 있는 프롬프트로 만들어줘"</b>라고 요청해 받은 결과</p>
+        <div class="sheet tight" style="margin-top:1rem;padding:.85rem 1.2rem">
+          <div class="tag">이 요청의 장치 4가지</div>
+          <div class="rowline" style="padding:.3rem .2rem"><span class="no">1</span><b>산출물 고정</b><span>"코드를 짜지 마 · 결과물은 프롬프트 하나"</span></div>
+          <div class="rowline" style="padding:.3rem .2rem"><span class="no">2</span><b>추측 금지</b><span>DB를 직접 열어 스키마·NULL 확인 후 작성</span></div>
+          <div class="rowline" style="padding:.3rem .2rem"><span class="no">3</span><b>함정 이관</b><span>잘못 집계하기 쉬운 지점을 프롬프트에 삽입</span></div>
+          <div class="rowline" style="padding:.3rem .2rem"><span class="no">4</span><b>검증 지점</b><span>중간에 사람이 숫자를 확인하는 구간 배치</span></div>
+        </div>
+        <div class="callout" style="margin-top:.9rem;padding:.7rem 1rem"><p style="font-size:clamp(10px,.84vw,14px)"><b class="serif">같은 패턴 —</b> "아직 코드는 작성하지 마" · "아직 고치지는 마"와 동일 · <b class="accent">설계와 실행을 분리</b></p></div>
+      </div>
+      <pre class="sm" style="font-size:clamp(9px,.82vw,14px);line-height:1.62;max-height:80vh">내가 하려는 작업을 다른 사람이 그대로 실행할 수 있는 프롬프트로 만들어줘.
+지금 코드를 짜지는 마. 이번 결과물은 프롬프트 하나다.
+
+<span class="ph">## 하려는 것</span>
+
+`ecommerce.db`(SQLite)에 이커머스 데이터가 있어. 여러 공급사가 입점한 플랫폼이고,
+경영진 보고용 대시보드를 React + Vite로 만들 거야. 답해야 할 질문은 3개다.
+
+1. **어느 공급사가 매출과 수익 대부분을 차지하나?**
+   한두 곳에 쏠려 있다면 그 자체가 리스크다.
+
+2. **고객은 결제 전 어느 단계에서 가장 많이 떠나나?**
+   상품 조회 → 장바구니 → 결제 → 구매, 각 단계별 이탈률.
+
+3. **할인 쿠폰을 준 고객이 실제로 더 사고, 다시 돌아오나?**
+   쿠폰 받은 그룹과 안 받은 그룹의 구매전환 · 재구매 · 평균 구매금액 차이.
+
+<span class="ph">## 조건</span>
+
+- 쓰기 전에 DB를 직접 열어서 테이블·컬럼·실제 값·NULL을 확인해. 추측하지 마
+- 확인한 스키마와, 잘못 집계하기 쉬운 지점을 프롬프트에 넣어줘
+- React는 SQLite를 직접 못 읽으니 데이터를 어떻게 넘길지도 정해서 써줘
+- 한 번에 다 만들지 않도록, 중간에 사람이 숫자를 확인하는 지점을 넣어줘
+
+복사해서 바로 쓸 수 있는 프롬프트 본문과, 각 항목을 왜 넣었는지 해설을 나눠서 써줘.
+마지막에 내가 놓친 것이나 데이터로 답할 수 없는 게 있으면 알려줘.</pre>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · 데이터 분석 실습</div>
+    <aside class="note">순서를 뒤집어 보여주는 장이다 — 앞 장에서 "이렇게 긴 지시서를 어떻게 쓰나" 하는 부담이 생겼을 텐데, 사실 그 지시서도 이 한 장에서 나왔다는 걸 밝히면 부담이 풀린다. 강조할 것 세 가지: ①"지금 코드를 짜지는 마, 결과물은 프롬프트 하나"가 산출물을 고정한다 — 이게 없으면 곧바로 코드를 만들어 버린다. ②"DB를 직접 열어 확인해, 추측하지 마"가 앞 장 지시서의 스키마 표와 'session_id distinct' 같은 함정 경고를 만들어낸 부분이다 — 사람이 몰라도 에이전트가 조사해서 채운다. ③마지막 줄 "내가 놓친 것을 알려줘"는 지시서의 빈틈을 역으로 점검받는 장치. 여유가 있으면 수강생 각자의 업무로 이 요청을 한 번 돌려보게 하면 체감이 가장 크다.</aside>
   </section>
   <section class="slide dark">
     <div class="content cols c2">
