@@ -3556,6 +3556,99 @@ DB 파일: `ecommerce.db` (프로젝트 루트, SQLite) · 기간: 2026-02-16 ~ 
   </section>
 
 <!-- ══════════════════════════════════════════════════
+     [future] Future Work · 로컬 → 클라우드 자동 운영 · 4장 (디바이더 포함)
+     ══════════════════════════════════════════════════ -->
+
+  <section class="slide divider">
+    <div class="content">
+      <div class="partno">F</div>
+      <div class="partlabel">FUTURE WORK</div>
+      <h2>내 PC에서 —<br>매일 스스로 도는 구조로</h2>
+      <p class="lead">오늘 만든 건 내 노트북 안에서만 도는 대시보드<br>여기서 무엇을 바꿔야 매일 아침 저절로 갱신되는가</p>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · FUTURE WORK</div>
+    <aside class="note">오늘 실습의 결론이자 다음 단계 예고다. 실습으로 만든 대시보드는 "내가 실행해야만" 갱신된다는 점을 먼저 인정하고, 그 제약을 하나씩 풀어가는 순서로 설명한다. 3회차의 "로컬이냐 클라우드냐"(예약 작업 · 배포) 개념이 여기서 종합된다는 걸 짚어주면 강의 전체가 한 번에 꿰인다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">Future Work · 현재 구조의 한계</div>
+      <h2 class="sm">자동으로 안 도는 이유 —<br><span class="hl">세 군데가 로컬에 묶임</span></h2>
+      <div class="sheet tight" style="margin-top:1rem">
+        <div class="tag">로컬 의존 3가지</div>
+        <div class="rowline"><span class="no">1</span><b>데이터</b><span><code>ecommerce.db</code>가 <b class="accent">내 PC 디스크</b>에만 존재 — 외부에서 조회 불가</span></div>
+        <div class="rowline"><span class="no">2</span><b>집계 실행</b><span><code>build_dashboard_data.py</code>를 <b class="accent">사람이 직접 실행</b>해야 JSON 갱신</span></div>
+        <div class="rowline"><span class="no">3</span><b>AI 호출</b><span>Claude Code는 <b class="navy">대화형 CLI</b> — 승인·세션을 전제 · 무인 반복 실행에 부적합</span></div>
+      </div>
+      <div class="callout" style="margin-top:1.3rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">결과 —</b> <b class="accent">PC를 켜고 내가 실행해야만</b> 숫자가 갱신 · 배포된 화면은 마지막 실행 시점에 고정</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · Future Work</div>
+    <aside class="note">3번이 가장 오해가 많은 지점이다 — Claude Code에도 비대화형 실행 옵션은 있지만, 크론으로 매일 도는 서버 작업에는 API 호출이 표준이라는 정도로 정리한다. 앞서 PlayMCP·Routine에서 다룬 "로컬 실행 기반이면 PC가 꺼질 때 중단"과 정확히 같은 제약이라는 걸 연결해준다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">Future Work · 무엇을 바꾸나</div>
+      <h2 class="sm">네 구간을 —<br><span class="hl">클라우드 부품으로 교체</span></h2>
+      <table class="compact" style="max-width:98rem;margin-top:.8rem">
+        <tr><th style="width:7rem">구간</th><th style="width:17rem">지금</th><th style="width:16rem">바꿀 것</th><th>후보</th></tr>
+        <tr>
+          <td><b class="serif">데이터</b></td>
+          <td>로컬 <code>ecommerce.db</code></td>
+          <td>클라우드 DB</td>
+          <td><b class="navy">Supabase</b>(Postgres · 무료 티어) · Neon · <b class="navy">Turso</b>(SQLite 호환 — 마이그레이션 부담 최소)</td>
+        </tr>
+        <tr style="background:rgba(207,79,38,.07)">
+          <td><b class="serif accent">집계 실행</b></td>
+          <td>사람이 python 실행</td>
+          <td><b class="accent">예약 실행</b></td>
+          <td>Make · n8n · GitHub Actions cron(저장소가 이미 있어 추가 가입 불필요)</td>
+        </tr>
+        <tr>
+          <td><b class="serif">AI 호출</b></td>
+          <td>Claude Code(대화형)</td>
+          <td>API 호출</td>
+          <td><b class="navy">Gemini API</b>(오늘 발급한 키 그대로) · Claude API</td>
+        </tr>
+        <tr>
+          <td><b class="serif">화면 갱신</b></td>
+          <td>재빌드 후 <code>git push</code></td>
+          <td>자동 재배포</td>
+          <td>Vercel <b class="navy">Deploy Hook</b>(URL 호출 한 번) · 또는 런타임에 DB를 직접 조회</td>
+        </tr>
+      </table>
+      <div class="callout" style="margin-top:1.1rem"><p style="font-size:clamp(13px,1.05vw,19px)"><b class="serif">비밀값도 함께 이사 —</b> 로컬 <code>.env</code> → <b class="accent">GitHub Secrets · Vercel 환경변수 · Make Connection</b> · 저장소에는 계속 값 없이</p></div>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · Future Work</div>
+    <aside class="note">네 줄 모두 오늘 이미 한 번씩 만져본 것들이라는 점을 강조한다 — Gemini API 키는 발급했고, Vercel 배포도 해봤고, Make 예약도 켜봤다. 새로 배우는 건 클라우드 DB 하나뿐이다. Turso를 따로 언급하는 이유는 SQLite 파일을 거의 그대로 올릴 수 있어 스키마 변환이 필요 없기 때문 — Postgres로 가면 타입·문법을 손봐야 한다. AI 호출 행은 "Claude가 나빠서가 아니라 무인 반복에는 API가 맞는다"는 톤으로 짚는다.</aside>
+  </section>
+
+  <section class="slide">
+    <div class="content">
+      <div class="kicker">Future Work · Make 시나리오 구성</div>
+      <h2 class="sm">매일 08시 —<br><span class="hl">다섯 모듈이 순서대로</span></h2>
+      <div class="rig" style="margin-top:1.1rem;--bxpad:.95rem">
+        <div class="bx"><b>① Schedule</b><span>매일 08:00<br><span class="sub">트리거</span></span></div>
+        <div class="op">→</div>
+        <div class="bx"><b>② PostgreSQL</b><span>클라우드 DB에<br>집계 쿼리 실행</span></div>
+        <div class="op">→</div>
+        <div class="bx core"><b>③ Gemini AI</b><span>집계 결과 →<br>해석 한 줄 생성</span></div>
+        <div class="op">→</div>
+        <div class="bx res"><b>④ HTTP</b><span>Vercel Deploy<br>Hook 호출</span></div>
+        <div class="op">→</div>
+        <div class="bx"><b>⑤ Telegram</b><span>완료 알림 +<br>핵심 수치</span></div>
+      </div>
+      <div class="cols c2" style="margin-top:1.2rem;gap:2vw;align-items:start">
+        <div class="callout" style="padding:.85rem 1.2rem"><p style="font-size:clamp(11px,.92vw,16px)"><b class="serif">설계 원칙 —</b> 무거운 집계는 <b class="accent">DB(SQL)에서</b> 끝내고, Make는 <b class="navy">순서만 조율</b> · 원본 행을 Make로 끌어오면 credit이 급증</p></div>
+        <div class="callout" style="padding:.85rem 1.2rem"><p style="font-size:clamp(11px,.92vw,16px)"><b class="serif">무료 플랜 계산 —</b> 5모듈 × 하루 1회 = 월 약 <b class="accent">150 credits</b> — 무료 1,000 credits 안에서 충분</p></div>
+      </div>
+      <p class="sub" style="margin-top:.9rem;font-size:clamp(12px,.98vw,17px)"><b class="navy">n8n으로 한다면</b> — 같은 5단계가 <b>실행 1회</b>로 계산 · 대신 서버를 직접 운영 · <b class="navy">GitHub Actions</b>만으로도 가능(②~④를 스크립트 한 개로, 추가 가입 없음)</p>
+    </div>
+    <div class="runfoot"><b>AI 업무 자동화</b> SESSION 04 · Future Work</div>
+    <aside class="note">오늘 만든 Make 시나리오(HTTP → Text parser → Aggregator → Gemini → Telegram)와 모듈 수가 같다는 걸 짚어주면 "이미 해본 것"이라는 감각이 생긴다. 바뀌는 건 앞 두 칸뿐 — 웹 크롤링 대신 DB 조회, 그리고 마지막에 Deploy Hook이 추가된다. 설계 원칙 콜아웃이 실무에서 가장 중요하다: Make로 원본 7.5만 행을 끌어오면 모듈마다 bundle이 쪼개져 credit이 수천 단위로 튄다. 집계는 반드시 SQL에서 끝내고 Make는 결과 한 줄만 받는다. 마지막 줄은 "Make가 유일한 답은 아니다"를 알려주는 안전장치 — 저장소가 이미 있으니 GitHub Actions가 가장 저렴한 선택일 수 있다고만 언급하고 넘어간다.</aside>
+  </section>
+
+<!-- ══════════════════════════════════════════════════
      [qa] Q&A · 1장
      ══════════════════════════════════════════════════ -->
 
